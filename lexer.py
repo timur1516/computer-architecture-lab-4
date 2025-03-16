@@ -1,3 +1,24 @@
+from _token import Token
+from token_type import TokenType
+
+
+def is_simple_token_type(value: str) -> bool:
+    try:
+        token = TokenType(value)
+        excluded = {TokenType.NUMBER, TokenType.WORD, TokenType.EOF}
+        return token not in excluded
+    except ValueError:
+        return False
+
+
+def is_number(value: str) -> bool:
+    try:
+        number = int(value)
+        return True
+    except ValueError:
+        return False
+
+
 class Lexer:
 
     def __init__(self, text):
@@ -23,22 +44,20 @@ class Lexer:
             self.next_char()
         return result
 
-    def parse_integer(self):
-        result = ''
-        while self.current_char is not None and self.current_char.isdigit():
-            result += self.current_char
-            self.next_char()
-        return int(result)
-
-    def get_next_word(self):
+    def get_next_token(self):
         while self.current_char is not None:
             if self.current_char.isspace():
                 self.skip_whitespace()
                 continue
 
-            if self.current_char.isdigit():
-                return self.parse_integer()
+            word = self.parse_word()
 
-            return self.parse_word()
+            if is_simple_token_type(word):
+                return Token(TokenType(word))
 
-        return None
+            if is_number(word):
+                return Token(TokenType.NUMBER, word)
+
+            return Token(TokenType.WORD, word)
+
+        return Token(TokenType.EOF)

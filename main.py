@@ -1,14 +1,17 @@
-from interpreter import Interpreter
+from lexer import Lexer
+from parser import Parser
 
 
 def main():
-    interpreter = Interpreter()
-    while True:
-        text = input()
-        try:
-            interpreter.interpret(text)
-        except Exception as e:
-            print(f'Error: {e}')
+    text = '''
+            : a 1 2 - + ;
+            begin 1 3 a until
+            if 1 * / then
+            if 2 else . then 
+            var x
+            123 x !
+            '''
+    Parser(Lexer(text)).parse()
 
 
 if __name__ == '__main__':

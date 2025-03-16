@@ -347,10 +347,10 @@ class Interpreter:
     # --------------------------------------------------------------------------
     def interpret(self, text):
         lexer = Lexer(text)
-        word = lexer.get_next_word()
+        word = lexer.get_next_token()
         while word is not None:
             self.process_word_and_state(word)
-            word = lexer.get_next_word()
+            word = lexer.get_next_token()
         if self.state == State.DEFAULT:
             print(f'Stack state: {self.stack}')
             print(f'Memory state: {self.memory}')
