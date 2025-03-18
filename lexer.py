@@ -5,7 +5,7 @@ from token_type import TokenType
 def is_simple_token_type(value: str) -> bool:
     try:
         token = TokenType(value)
-        excluded = {TokenType.NUMBER, TokenType.WORD, TokenType.EOF}
+        excluded = {TokenType.NUMBER, TokenType.SYMBOL, TokenType.EOF}
         return token not in excluded
     except ValueError:
         return False
@@ -58,6 +58,6 @@ class Lexer:
             if is_number(word):
                 return Token(TokenType.NUMBER, word)
 
-            return Token(TokenType.WORD, word)
+            return Token(TokenType.SYMBOL, word)
 
         return Token(TokenType.EOF)

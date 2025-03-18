@@ -3,7 +3,7 @@ from enum import Enum
 
 class TokenType(str, Enum):
     NUMBER = 'NUMBER'
-    WORD = 'WORD'
+    SYMBOL = 'SYMBOL'
     PLUS = '+'
     MINUS = '-'
     MUL = '*'

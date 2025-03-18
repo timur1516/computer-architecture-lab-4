@@ -5,13 +5,15 @@ from parser import Parser
 def main():
     text = '''
             : a 1 2 - + ;
-            begin 1 3 a until
-            if 1 * / then
-            if 2 else . then 
-            var x
+            : b begin 1 3 a until ;
+            : c if 1 * / b then ;
+            : d if 2 else . c then ; 
+            var x d
             123 x !
             '''
-    Parser(Lexer(text)).parse()
+    prog = Parser(Lexer(text)).parse()
+    for l in prog:
+        print(l)
 
 
 if __name__ == '__main__':
