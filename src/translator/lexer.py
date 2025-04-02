@@ -1,5 +1,5 @@
-from _token import Token
-from token_type import TokenType
+from src.translator.token._token import Token
+from src.translator.token.token_type import TokenType
 
 
 def is_simple_token_type(value: str) -> bool:

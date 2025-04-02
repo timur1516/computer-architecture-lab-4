@@ -2,6 +2,8 @@ import json
 from enum import Enum
 from typing import List
 
+from src.isa.bin_utils import extract_bits, binary_to_signed_int, is_correct_bin_size_signed
+
 
 class Opcode(str, Enum):
     LUI = 'lui'
@@ -48,18 +50,6 @@ class Register(str, Enum):
         return self.value
 
 
-def binary_to_unsigned_int(binary: int, n: int) -> int:
-    mask = (1 << n) - 1
-    return binary & mask
-
-
-def binary_to_signed_int(binary: int, n: int) -> int:
-    value = binary_to_unsigned_int(binary, n)
-    if value & (1 << (n - 1)):
-        value -= (1 << n)
-    return value
-
-
 class Instruction:
     opcode = None
 
@@ -71,11 +61,12 @@ class Instruction:
 
     @staticmethod
     def from_binary(binary: int) -> 'Instruction':
-        opcode_bin = binary_to_unsigned_int(binary, 7)
+        opcode_bin = extract_bits(binary, 7)
         opcode = binary_to_opcode[opcode_bin]
+
         return Instruction(opcode)
 
-    def to_json(self):
+    def to_json(self) -> dict:
         return {'opcode': str(self.opcode)}
 
     def __str__(self) -> str:
@@ -87,27 +78,30 @@ class UInstruction(Instruction):
     u_imm = None
 
     def __init__(self, opcode: Opcode, rd: Register, u_imm: int):
+        assert is_correct_bin_size_signed(u_imm, 20), 'u_imm size in UInstruction must be 20 bits'
+
         super().__init__(opcode)
-
-        # TODO: add u_imm size check
-
         self.rd = rd
         self.u_imm = u_imm
 
     def to_binary(self) -> int:
-        return (self.u_imm << 12) | (register_to_binary[self.rd] << 7) | opcode_to_binary[self.opcode]
+        return (self.u_imm << 12 |
+                register_to_binary[self.rd] << 7 |
+                opcode_to_binary[self.opcode])
 
     @staticmethod
     def from_binary(binary: int) -> 'UInstruction':
-        opcode_bin = binary_to_unsigned_int(binary, 7)
-        rd_binary = binary_to_unsigned_int(binary >> 7, 5)
-
+        opcode_bin = extract_bits(binary, 7)
         opcode = binary_to_opcode[opcode_bin]
-        rd = binary_to_register[rd_binary]
+
+        rd_bin = extract_bits(binary >> 7, 5)
+        rd = binary_to_register[rd_bin]
+
         u_imm = binary_to_signed_int(binary >> 12, 20)
+
         return UInstruction(opcode, rd, u_imm)
 
-    def to_json(self):
+    def to_json(self) -> dict:
         return {'opcode': str(self.opcode), 'rd': str(self.rd), 'u_imm': self.u_imm}
 
     def __str__(self) -> str:
@@ -129,24 +123,32 @@ class SInstruction(Instruction):
 
     def to_binary(self) -> int:
         if self.rd is None:
-            return (register_to_binary[self.rs2] << 17) | (register_to_binary[self.rs1] << 12) | (0x0 << 7) | \
-                opcode_to_binary[self.opcode]
-        return (register_to_binary[self.rs1] << 12) | (register_to_binary[self.rd] << 7) | opcode_to_binary[self.opcode]
+            return (register_to_binary[self.rs2] << 17 |
+                    register_to_binary[self.rs1] << 12 |
+                    0x0 << 7 |
+                    opcode_to_binary[self.opcode])
+
+        return (register_to_binary[self.rs1] << 12 |
+                register_to_binary[self.rd] << 7 |
+                opcode_to_binary[self.opcode])
 
     @staticmethod
     def from_binary(binary: int) -> 'SInstruction':
-        opcode_bin = binary_to_unsigned_int(binary, 7)
-        rd_binary = binary_to_unsigned_int(binary >> 7, 5)
-        rs1_binary = binary_to_unsigned_int(binary >> 12, 5)
-        rs2_binary = binary_to_unsigned_int(binary >> 17, 5)
-
+        opcode_bin = extract_bits(binary, 7)
         opcode = binary_to_opcode[opcode_bin]
-        rd = binary_to_register[rd_binary]
-        rs1 = binary_to_register[rs1_binary]
-        rs2 = binary_to_register[rs2_binary]
+
+        rd_bin = extract_bits(binary >> 7, 5)
+        rd = binary_to_register[rd_bin]
+
+        rs1_bin = extract_bits(binary >> 12, 5)
+        rs1 = binary_to_register[rs1_bin]
+
+        rs2_bin = extract_bits(binary >> 17, 5)
+        rs2 = binary_to_register[rs2_bin]
+
         return SInstruction(opcode, rd, rs1, rs2)
 
-    def to_json(self):
+    def to_json(self) -> dict:
         return {'opcode': str(self.opcode), 'rd': str(self.rd), 'rs1': str(self.rs1), 'rs2': str(self.rs2)}
 
     def __str__(self) -> str:
@@ -161,31 +163,35 @@ class IInstruction(Instruction):
     imm = None
 
     def __init__(self, opcode: Opcode, rd: Register, rs1: Register, imm: int):
+        assert is_correct_bin_size_signed(imm, 12), 'imm size in IInstruction must be 12 bits'
+
         super().__init__(opcode)
-
-        # TODO: add imm size check
-
         self.rd = rd
         self.rs1 = rs1
         self.imm = imm
 
     def to_binary(self) -> int:
-        return ((self.imm << 17) | (register_to_binary[self.rs1] << 12) | (register_to_binary[self.rd] << 7) |
+        return (self.imm << 17 |
+                register_to_binary[self.rs1] << 12 |
+                register_to_binary[self.rd] << 7 |
                 opcode_to_binary[self.opcode])
 
     @staticmethod
     def from_binary(binary: int) -> 'IInstruction':
-        opcode_bin = binary_to_unsigned_int(binary, 7)
-        rd_binary = binary_to_unsigned_int(binary >> 7, 5)
-        rs1_binary = binary_to_unsigned_int(binary >> 12, 5)
-
+        opcode_bin = extract_bits(binary, 7)
         opcode = binary_to_opcode[opcode_bin]
-        rd = binary_to_register[rd_binary]
-        rs1 = binary_to_register[rs1_binary]
+
+        rd_bin = extract_bits(binary >> 7, 5)
+        rd = binary_to_register[rd_bin]
+
+        rs1_bin = extract_bits(binary >> 12, 5)
+        rs1 = binary_to_register[rs1_bin]
+
         imm = binary_to_signed_int(binary >> 17, 12)
+
         return IInstruction(opcode, rd, rs1, imm)
 
-    def to_json(self):
+    def to_json(self) -> dict:
         return {'opcode': str(self.opcode), 'rd': str(self.rd), 'rs1': str(self.rs1), 'imm': self.imm}
 
     def __str__(self) -> str:
@@ -204,23 +210,28 @@ class RInstruction(Instruction):
         self.rs2 = rs2
 
     def to_binary(self) -> int:
-        return ((register_to_binary[self.rs2] << 17) | (register_to_binary[self.rs1] << 12) | (
-                register_to_binary[self.rd] << 7) | opcode_to_binary[self.opcode])
+        return (register_to_binary[self.rs2] << 17 |
+                register_to_binary[self.rs1] << 12 |
+                register_to_binary[self.rd] << 7 |
+                opcode_to_binary[self.opcode])
 
     @staticmethod
     def from_binary(binary: int) -> 'RInstruction':
-        opcode_bin = binary_to_unsigned_int(binary, 7)
-        rd_binary = binary_to_unsigned_int(binary >> 7, 5)
-        rs1_binary = binary_to_unsigned_int(binary >> 12, 5)
-        rs2_binary = binary_to_unsigned_int(binary >> 17, 5)
-
+        opcode_bin = extract_bits(binary, 7)
         opcode = binary_to_opcode[opcode_bin]
-        rd = binary_to_register[rd_binary]
-        rs1 = binary_to_register[rs1_binary]
-        rs2 = binary_to_register[rs2_binary]
+
+        rd_bin = extract_bits(binary >> 7, 5)
+        rd = binary_to_register[rd_bin]
+
+        rs1_bin = extract_bits(binary >> 12, 5)
+        rs1 = binary_to_register[rs1_bin]
+
+        rs2_bin = extract_bits(binary >> 17, 5)
+        rs2 = binary_to_register[rs2_bin]
+
         return RInstruction(opcode, rd, rs1, rs2)
 
-    def to_json(self):
+    def to_json(self) -> dict:
         return {'opcode': str(self.opcode), 'rd': str(self.rd), 'rs1': str(self.rs1), 'rs2': str(self.rs2)}
 
     def __str__(self) -> str:
@@ -233,35 +244,41 @@ class BInstruction(Instruction):
     imm = None
 
     def __init__(self, opcode: Opcode, rs1: Register, rs2: Register, imm: int):
+        assert is_correct_bin_size_signed(imm, 15), 'imm size in BInstruction must be 15 bits'
+
         super().__init__(opcode)
-
-        # TODO: add imm size check
-
         self.rs1 = rs1
         self.rs2 = rs2
         self.imm = imm
 
     def to_binary(self) -> int:
-        imm_lower_bytes = self.imm & 0x1F
-        imm_upper_bytes = self.imm >> 5
-        return ((imm_upper_bytes << 17) | (register_to_binary[self.rs1] << 12) | (imm_lower_bytes << 7) |
+        imm_lower = extract_bits(self.imm, 5)
+        imm_upper = self.imm >> 5
+
+        return (imm_upper << 17 |
+                register_to_binary[self.rs1] << 12 |
+                imm_lower << 7 |
                 opcode_to_binary[self.opcode])
 
     @staticmethod
     def from_binary(binary: int) -> 'BInstruction':
-        opcode_bin = binary_to_unsigned_int(binary, 7)
-        imm_lower_bytes = (binary >> 7) & 0x1F
-        rs1_binary = binary_to_unsigned_int(binary >> 12, 5)
-        rs2_binary = binary_to_unsigned_int(binary >> 17, 5)
-        imm_upper_bytes = (binary >> 22) & 0x3FF
-
+        opcode_bin = extract_bits(binary, 7)
         opcode = binary_to_opcode[opcode_bin]
-        rs1 = binary_to_register[rs1_binary]
-        rs2 = binary_to_register[rs2_binary]
-        imm = binary_to_signed_int((imm_upper_bytes << 5) | imm_lower_bytes, 15)
+
+        imm_lower = extract_bits(binary >> 7, 5)
+        imm_upper = extract_bits(binary >> 22, 10)
+        imm_bin = (imm_upper << 5) | imm_lower
+        imm = binary_to_signed_int(imm_bin, 15)
+
+        rs1_bin = extract_bits(binary >> 12, 5)
+        rs1 = binary_to_register[rs1_bin]
+
+        rs2_bin = extract_bits(binary >> 17, 5)
+        rs2 = binary_to_register[rs2_bin]
+
         return BInstruction(opcode, rs1, rs2, imm)
 
-    def to_json(self):
+    def to_json(self) -> dict:
         return {'opcode': str(self.opcode), 'rs1': str(self.rs1), 'rs2': str(self.rs2), 'imm': self.imm}
 
     def __str__(self) -> str:

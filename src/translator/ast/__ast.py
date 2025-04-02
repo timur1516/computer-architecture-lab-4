@@ -1,6 +1,6 @@
 from typing import List
 
-from token_type import TokenType
+from src.translator.token.token_type import TokenType
 
 
 class Ast:

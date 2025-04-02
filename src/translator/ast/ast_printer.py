@@ -1,6 +1,6 @@
-from __ast import AstBlock, AstNumber, AstOperation, AstSymbol, AstIfStatement, AstWhileStatement, \
+from src.translator.ast.__ast import AstBlock, AstNumber, AstOperation, AstSymbol, AstIfStatement, AstWhileStatement, \
     AstVariableDeclaration, AstDefinition, Ast
-from ast_node_visitor import AstNodeVisitor
+from src.translator.ast.ast_node_visitor import AstNodeVisitor
 
 
 class AstPrinter(AstNodeVisitor):

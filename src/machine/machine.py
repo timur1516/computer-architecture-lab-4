@@ -1,4 +1,3 @@
-import logging
 import sys
 
 from src.isa.isa import from_bytes
@@ -19,10 +18,10 @@ def simulation(code, data_memory_size, limit):
         pass
 
     if control_unit.get_tick() >= limit:
-        logging.warning("Limit exceeded!")
+        print('Ticks limit exceeded!')
 
 
-def main(code_file):
+def main(code_file: str):
     with open(code_file, "rb") as file:
         binary_code = file.read()
     code = from_bytes(binary_code)
@@ -35,7 +34,6 @@ def main(code_file):
 
 
 if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.DEBUG)
     assert len(sys.argv) == 2, "Wrong arguments: machine.py <code_file>"
     _, code_file = sys.argv
     main(code_file)

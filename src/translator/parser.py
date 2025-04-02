@@ -1,9 +1,8 @@
-from __ast import AstBlock, AstNumber, Ast, AstOperation, AstSymbol, AstIfStatement, AstWhileStatement, \
-    AstVariableDeclaration, \
-    AstDefinition
-from grammar_start_tokens import *
-from lexer import Lexer
-from token_type import TokenType
+from src.translator.ast.__ast import AstBlock, AstNumber, AstOperation, AstSymbol, AstIfStatement, AstWhileStatement, \
+    AstVariableDeclaration, AstDefinition, Ast
+from src.translator.lexer import Lexer
+from src.translator.token.grammar_start_tokens import *
+from src.translator.token.token_type import TokenType
 
 
 class Parser:
