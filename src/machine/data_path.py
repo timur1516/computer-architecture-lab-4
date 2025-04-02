@@ -1,4 +1,7 @@
+from typing import List
+
 from src.isa.isa import Register, Opcode
+from src.isa.memory_config import INPUT_ADDRESS, OUTPUT_ADDRESS
 
 ALU_OPCODE_OPERATORS = {
     Opcode.ADD: lambda left, right: left + right,
@@ -21,16 +24,22 @@ class DataPath:
 
     data_address = None
 
+    input_buffer = None
+
+    output_buffer = None
+
     registers = {r: None for r in Register}
 
     zero_flag = None
 
     negative_flag = None
 
-    def __init__(self, data_memory_size: int) -> None:
+    def __init__(self, data_memory_size: int, input_buffer: List[chr]) -> None:
         self.data_memory_size = data_memory_size
         self.data_memory = [0] * data_memory_size
         self.data_address = 0
+        self.input_buffer = input_buffer
+        self.output_buffer = []
         self.registers = {r: 0 for r in Register}
         self.registers[Register.SP] = self.data_memory_size
         self.zero_flag = False
@@ -42,10 +51,25 @@ class DataPath:
         assert 0 <= self.data_address < self.data_memory_size, 'out of memory: {}'.format(self.data_address)
 
     def signal_data_memory_store(self, rs2: Register):
-        self.data_memory[self.data_address] = self.registers[rs2]
+        if self.data_address == INPUT_ADDRESS:
+            raise RuntimeError('Writing to INPUT_ADDRESS is forbidden')
+        if self.data_address == OUTPUT_ADDRESS:
+            symbol = chr(self.registers[rs2])
+            self.output_buffer.append(symbol)
+        else:
+            self.data_memory[self.data_address] = self.registers[rs2]
 
     def signal_data_memory_load(self, rd: Register):
-        value = self.data_memory[self.data_address]
+        if self.data_address == OUTPUT_ADDRESS:
+            raise RuntimeError('Reading from OUTPUT_ADDRESS is forbidden')
+        if self.data_address == INPUT_ADDRESS:
+            if len(self.input_buffer) == 0:
+                raise EOFError()
+            symbol = self.input_buffer.pop(0)
+            value = ord(symbol)
+
+        else:
+            value = self.data_memory[self.data_address]
         self._write_to_reg(rd, value)
 
     def signal_perform_alu_operation_reg(self, rs1: Register, rs2: Register, rd: Register, opcode: Opcode):

@@ -18,7 +18,6 @@ class TokenType(str, Enum):
     LESS = '<'
     LESS_EQUAL = '<='
     PRINT = '.'
-    EMIT = 'emit'
     READ = ','
     STORE = '!'
     LOAD = '@'

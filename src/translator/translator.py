@@ -4,6 +4,7 @@ from typing import List
 
 from src.isa.isa import Instruction, RInstruction, SInstruction, Register, Opcode, IInstruction, BInstruction
 from src.isa.isa import to_bytes, to_hex, write_json
+from src.isa.memory_config import DATA_AREA_START_ADDR, INPUT_ADDRESS, OUTPUT_ADDRESS
 from src.translator.ast.ast_node_visitor import AstBlock, AstNumber, AstOperation, AstSymbol, AstIfStatement, \
     AstWhileStatement, AstVariableDeclaration, AstDefinition, Ast, AstNodeVisitor
 from src.translator.ast.ast_printer import AstPrinter
@@ -18,6 +19,18 @@ OPERATION_TRANSLATION = {
         SInstruction(Opcode.LW, Register.T1, Register.SP, None),
         IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
         RInstruction(Opcode.ADD, Register.T0, Register.T1, Register.T0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+        SInstruction(Opcode.SW, None, Register.SP, Register.T0)
+    ],
+    TokenType.PRINT: [
+        SInstruction(Opcode.LW, Register.T0, Register.SP, None),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+        IInstruction(Opcode.ADDI, Register.T1, Register.ZERO, OUTPUT_ADDRESS),
+        SInstruction(Opcode.SW, None, Register.T1, Register.T0)
+    ],
+    TokenType.READ: [
+        IInstruction(Opcode.ADDI, Register.T1, Register.ZERO, INPUT_ADDRESS),
+        SInstruction(Opcode.LW, Register.T0, Register.T1, None),
         IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
         SInstruction(Opcode.SW, None, Register.SP, Register.T0)
     ]
@@ -56,8 +69,9 @@ class Translator(AstNodeVisitor):
         return result
 
     def visit_symbol(self, node: AstSymbol) -> List[Instruction]:
+        symbol_address = DATA_AREA_START_ADDR + self.symbol_table.index(node.name)
         return [
-            IInstruction(Opcode.ADDI, Register.T0, Register.ZERO, self.symbol_table.index(node.name)),
+            IInstruction(Opcode.ADDI, Register.T0, Register.ZERO, symbol_address),
             IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
             SInstruction(Opcode.SW, None, Register.SP, Register.T0)
         ]

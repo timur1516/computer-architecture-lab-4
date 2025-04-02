@@ -159,7 +159,7 @@ class ControlUnit:
                     return
 
     def __repr__(self):
-        state_repr = "TICK: {:3} PC: {:3}/{} ADDR: {:3} MEM_OUT: {} T0: {} T1: {} T2: {} SP: {}".format(
+        state_repr = "TICK: {:3} PC: {:3}/{} ADDR: {:3} MEM_OUT: {:3} T0: {:3} T1: {:3} T2: {:3} SP: {:3}".format(
             self._tick,
             self.program_counter,
             self.step,
@@ -173,4 +173,4 @@ class ControlUnit:
 
         instr = self.instruction_memory[self.program_counter]
 
-        return "{} \t{}".format(state_repr, instr.opcode)
+        return "{} \t{}".format(state_repr, instr)
