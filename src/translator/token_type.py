@@ -31,4 +31,3 @@ class TokenType(str, Enum):
     SEMICOLON = ';'
     VAR = 'var'
     EOF = 'EOF'
-

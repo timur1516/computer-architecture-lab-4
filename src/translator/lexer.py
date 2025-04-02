@@ -13,7 +13,7 @@ def is_simple_token_type(value: str) -> bool:
 
 def is_number(value: str) -> bool:
     try:
-        number = int(value)
+        int(value)
         return True
     except ValueError:
         return False
@@ -24,7 +24,7 @@ class Lexer:
     def __init__(self, text):
         self.text = text
         self.pos = 0
-        self.current_char = self.text[self.pos]
+        self.current_char = self.text[self.pos] if len(self.text) > 0 else None
 
     def next_char(self):
         self.pos += 1
