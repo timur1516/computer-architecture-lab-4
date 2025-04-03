@@ -2,7 +2,8 @@ import json
 from enum import Enum
 from typing import List
 
-from src.isa.bin_utils import extract_bits, binary_to_signed_int, is_correct_bin_size_signed
+from src.isa.bin_utils import extract_bits, binary_to_signed_int, is_correct_bin_size_signed, to_bin_word
+from src.isa.memory_config import DATA_AREA_START_ADDR
 
 
 class Opcode(str, Enum):
@@ -43,6 +44,7 @@ class Register(str, Enum):
     T0 = 't0'
     T1 = 't1'
     T2 = 't2'
+    T3 = 't3'
     SP = 'sp'
     ZERO = 'zero'
 
@@ -255,7 +257,8 @@ class BInstruction(Instruction):
         imm_lower = extract_bits(self.imm, 5)
         imm_upper = self.imm >> 5
 
-        return (imm_upper << 17 |
+        return (imm_upper << 22 |
+                register_to_binary[self.rs2] << 17 |
                 register_to_binary[self.rs1] << 12 |
                 imm_lower << 7 |
                 opcode_to_binary[self.opcode])
@@ -331,8 +334,9 @@ register_to_binary = {
     Register.T0: 0x1,
     Register.T1: 0x2,
     Register.T2: 0x3,
-    Register.SP: 0x4,
-    Register.ZERO: 0x5
+    Register.T3: 0x4,
+    Register.SP: 0x5,
+    Register.ZERO: 0x6
 }
 
 binary_to_register = {
@@ -340,8 +344,9 @@ binary_to_register = {
     0x1: Register.T0,
     0x2: Register.T1,
     0x3: Register.T2,
-    0x4: Register.SP,
-    0x5: Register.ZERO
+    0x4: Register.T3,
+    0x5: Register.SP,
+    0x6: Register.ZERO
 }
 
 opcode_to_instruction_type = {
@@ -371,60 +376,121 @@ opcode_to_instruction_type = {
 }
 
 
-def to_bytes(code: List[Instruction]) -> bytes:
-    binary_bytes = bytearray()
+def to_bytes(code: List[Instruction], data: List[int]) -> bytes:
+    binary_code = bytearray()
+
+    data_len = len(data)
+    binary_code.extend(to_bin_word(data_len))
+
+    for word in data:
+        binary_code.extend(to_bin_word(word))
+
     for instr in code:
         binary_instr = instr.to_binary()
+        binary_code.extend(to_bin_word(binary_instr))
 
-        binary_bytes.extend(
-            ((binary_instr >> 24) & 0xFF, (binary_instr >> 16) & 0xFF, (binary_instr >> 8) & 0xFF, binary_instr & 0xFF)
-        )
-
-    return bytes(binary_bytes)
+    return bytes(binary_code)
 
 
-def to_hex(code):
-    binary_code = to_bytes(code)
+def to_hex(code: List[Instruction], data: List[int]) -> str:
+    binary_code = to_bytes(code, data)
     result = []
+    data_address = DATA_AREA_START_ADDR
+    instruction_address = 0
 
-    for i in range(0, len(binary_code), 4):
+    data_len = int.from_bytes(binary_code[:4], 'big')
+
+    result.append(f'data')
+
+    for i in range(4, data_len * 4 + 1, 4):
         if i + 3 >= len(binary_code):
             break
 
-        word = (binary_code[i] << 24) | (binary_code[i + 1] << 16) | (binary_code[i + 2] << 8) | binary_code[i + 3]
+        word = int.from_bytes(binary_code[i:i + 4], 'big')
 
-        opcode_bin = word & 0x3F
-        opcode = binary_to_opcode[opcode_bin]
-        instruction = opcode_to_instruction_type[opcode].from_binary(word)
         hex_word = f'{word:08X}'
         bin_word = f'{word:032b}'
-        address = i // 4
-        line = f'{address:3} - {hex_word} - {bin_word} - {str(instruction)}'
+        line = f'{data_address:3} - {hex_word} - {bin_word}'
+
         result.append(line)
+        data_address += 1
+
+    result.append(f'instructions')
+
+    for i in range(4 + data_len * 4, len(binary_code), 4):
+        if i + 3 >= len(binary_code):
+            break
+
+        word = int.from_bytes(binary_code[i:i + 4], 'big')
+
+        opcode_bin = extract_bits(word, 7)
+        opcode = binary_to_opcode[opcode_bin]
+
+        instruction_type = opcode_to_instruction_type[opcode]
+        instruction = instruction_type.from_binary(word)
+
+        hex_word = f'{word:08X}'
+        bin_word = f'{word:032b}'
+        line = f'{instruction_address:3} - {hex_word} - {bin_word} - {str(instruction)}'
+
+        result.append(line)
+        instruction_address += 1
 
     return "\n".join(result)
 
 
-def from_bytes(binary_code):
-    structured_code = []
-    for i in range(0, len(binary_code), 4):
+def from_bytes(binary_code) -> (List[Instruction], List[int]):
+    instructions = []
+    data = []
+
+    data_len = int.from_bytes(binary_code[:4], 'big')
+
+    for i in range(4, data_len * 4 + 1, 4):
         if i + 3 >= len(binary_code):
             break
 
-        word = (binary_code[i] << 24) | (binary_code[i + 1] << 16) | (binary_code[i + 2] << 8) | binary_code[i + 3]
+        word = int.from_bytes(binary_code[i:i + 4], 'big')
 
-        opcode_bin = word & 0x3F
+        data.append(word)
+
+    for i in range(4 + data_len * 4, len(binary_code), 4):
+        if i + 3 >= len(binary_code):
+            break
+
+        word = int.from_bytes(binary_code[i:i + 4], 'big')
+
+        opcode_bin = extract_bits(word, 7)
         opcode = binary_to_opcode[opcode_bin]
-        instruction = opcode_to_instruction_type[opcode].from_binary(word)
 
-        structured_code.append(instruction)
+        instruction_type = opcode_to_instruction_type[opcode]
+        instruction = instruction_type.from_binary(word)
 
-    return structured_code
+        instructions.append(instruction)
+
+    return instructions, data
 
 
-def write_json(filename: str, code: List[Instruction]):
+def write_json(filename: str, code: List[Instruction], data_memory: List[int]):
+    data_address = DATA_AREA_START_ADDR
+    instruction_address = 0
+    data_buf = []
+    instructions_buf = []
+
     with open(filename, "w", encoding="utf-8") as file:
-        buf = []
-        for instr in code:
-            buf.append(json.dumps(instr.to_json()))
-        file.write("[" + ",\n ".join(buf) + "]")
+        for word in enumerate(data_memory):
+            data_buf.append(json.dumps({"address": data_address, "word": word}))
+            data_address += 1
+
+        for i, instr in enumerate(code):
+            instructions_buf.append(json.dumps({"address": instruction_address, **instr.to_json()}))
+            instruction_address += 1
+
+        file.write(
+            f'''{{
+    "data": [
+        {",\n\t\t".join(data_buf)}
+    ],
+    "instructions": [
+        {",\n\t\t".join(instructions_buf)}
+    ]
+}}''')

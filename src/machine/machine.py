@@ -6,8 +6,11 @@ from src.machine.control_unit import ControlUnit
 from src.machine.data_path import DataPath
 
 
-def simulation(code: List[Instruction], input_tokens: List[chr], data_memory_size: int, limit: int) -> List[chr]:
-    data_path = DataPath(data_memory_size, input_tokens)
+def simulation(code: List[Instruction], input_tokens: List[chr], init_data_memory: List[int], data_memory_size: int,
+               limit: int) -> List[chr]:
+    assert len(init_data_memory) <= data_memory_size, 'memory overflow'
+
+    data_path = DataPath(data_memory_size, input_tokens, init_data_memory)
     control_unit = ControlUnit(code, data_path)
 
     print(control_unit)
@@ -29,7 +32,7 @@ def simulation(code: List[Instruction], input_tokens: List[chr], data_memory_siz
 def main(code_file: str, input_file: str):
     with open(code_file, "rb") as file:
         binary_code = file.read()
-    code = from_bytes(binary_code)
+    code, data_memory = from_bytes(binary_code)
 
     with open(input_file, encoding="utf-8") as file:
         input_text = file.read()
@@ -40,6 +43,7 @@ def main(code_file: str, input_file: str):
     output = simulation(
         code,
         input_tokens,
+        data_memory,
         data_memory_size=100,
         limit=2000,
     )

@@ -2,9 +2,12 @@ import os
 import sys
 from typing import List
 
-from src.isa.isa import Instruction, RInstruction, SInstruction, Register, Opcode, IInstruction, BInstruction
+from src.isa.bin_utils import is_correct_bin_size_signed, extract_bits
+from src.isa.isa import Instruction, RInstruction, SInstruction, Register, Opcode, IInstruction, BInstruction, \
+    UInstruction
 from src.isa.isa import to_bytes, to_hex, write_json
 from src.isa.memory_config import DATA_AREA_START_ADDR, INPUT_ADDRESS, OUTPUT_ADDRESS
+from src.translator.ast.__ast import AstLiteral
 from src.translator.ast.ast_node_visitor import AstBlock, AstNumber, AstOperation, AstSymbol, AstIfStatement, \
     AstWhileStatement, AstVariableDeclaration, AstDefinition, Ast, AstNodeVisitor
 from src.translator.ast.ast_printer import AstPrinter
@@ -40,10 +43,14 @@ OPERATION_TRANSLATION = {
 class Translator(AstNodeVisitor):
     tree = None
     symbol_table = None
+    literals = None
+    data = None
 
-    def __init__(self, tree: Ast, symbol_table: List[str]):
+    def __init__(self, tree: Ast, symbol_table: List[str], literals: List[str]):
         self.tree = tree
         self.symbol_table = symbol_table
+        self.literals = literals
+        self.data = [0] * len(symbol_table)
 
     def translate(self):
         return self.visit(self.tree) + [Instruction(Opcode.HALT)]
@@ -54,11 +61,22 @@ class Translator(AstNodeVisitor):
         return OPERATION_TRANSLATION[node.token_type]
 
     def visit_number(self, node: AstNumber) -> List[Instruction]:
-        return [
-            IInstruction(Opcode.ADDI, Register.T0, Register.ZERO, node.value),
-            IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
-            SInstruction(Opcode.SW, None, Register.SP, Register.T0)
-        ]
+        value = node.value
+        if is_correct_bin_size_signed(value, 12):
+            return [
+                IInstruction(Opcode.ADDI, Register.T0, Register.ZERO, node.value),
+                IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+                SInstruction(Opcode.SW, None, Register.SP, Register.T0)
+            ]
+        else:
+            lower_value = extract_bits(value, 12)
+            upper_value = value >> 12
+            return [
+                UInstruction(Opcode.LUI, Register.T0, upper_value),
+                IInstruction(Opcode.ADDI, Register.T0, Register.T0, lower_value),
+                IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+                SInstruction(Opcode.SW, None, Register.SP, Register.T0)
+            ]
 
     def visit_block(self, node: AstBlock) -> List[Instruction]:
         result = []
@@ -74,6 +92,27 @@ class Translator(AstNodeVisitor):
             IInstruction(Opcode.ADDI, Register.T0, Register.ZERO, symbol_address),
             IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
             SInstruction(Opcode.SW, None, Register.SP, Register.T0)
+        ]
+
+    def visit_literal(self, node: AstLiteral) -> List[Instruction]:
+        value = self.literals[node.value_id]
+        address = DATA_AREA_START_ADDR + len(self.data)
+
+        self.data.append(len(value))
+        for c in value:
+            self.data.append(ord(c))
+
+        return [
+            IInstruction(Opcode.ADDI, Register.T0, Register.ZERO, address),
+            SInstruction(Opcode.LW, Register.T1, Register.T0, None),
+
+            IInstruction(Opcode.ADDI, Register.T0, Register.T0, 1),
+            SInstruction(Opcode.LW, Register.T3, Register.T0, None),
+            IInstruction(Opcode.ADDI, Register.T2, Register.ZERO, OUTPUT_ADDRESS),
+            SInstruction(Opcode.SW, None, Register.T2, Register.T3),
+
+            IInstruction(Opcode.ADDI, Register.T1, Register.T1, -1),
+            BInstruction(Opcode.BNE, Register.T1, Register.ZERO, -5)
         ]
 
     def visit_if_statement(self, node: AstIfStatement) -> List[Instruction]:
@@ -106,26 +145,28 @@ class Translator(AstNodeVisitor):
         return []
 
 
-def translate(text: str) -> List[Instruction]:
+def translate(text: str) -> (List[Instruction], List[int]):
     ast_printer = AstPrinter()
     parser = Parser(Lexer(text))
 
     tree = parser.parse()
     ast_printer.print(tree)
     print(parser.symbol_table)
+    print(parser.literals)
 
-    translator = Translator(tree, parser.symbol_table)
+    translator = Translator(tree, parser.symbol_table, parser.literals)
+    program = translator.translate()
 
-    return translator.translate()
+    return program, translator.data
 
 
 def main(source: str, target: str):
     with open(source, encoding="utf-8") as f:
         source = f.read()
 
-    code = translate(source)
-    binary_code = to_bytes(code)
-    hex_code = to_hex(code)
+    code, data = translate(source)
+    binary_code = to_bytes(code, data)
+    hex_code = to_hex(code, data)
 
     os.makedirs(os.path.dirname(os.path.abspath(target)) or ".", exist_ok=True)
 
@@ -135,7 +176,7 @@ def main(source: str, target: str):
         with open(target + ".hex", "w") as f:
             f.write(hex_code)
     else:
-        write_json(target, code)
+        write_json(target, code, data)
 
     print("source LoC:", len(source.split("\n")), "code instr:", len(code))
 

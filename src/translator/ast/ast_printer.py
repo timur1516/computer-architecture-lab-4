@@ -1,5 +1,5 @@
 from src.translator.ast.__ast import AstBlock, AstNumber, AstOperation, AstSymbol, AstIfStatement, AstWhileStatement, \
-    AstVariableDeclaration, AstDefinition, Ast
+    AstVariableDeclaration, AstDefinition, Ast, AstLiteral
 from src.translator.ast.ast_node_visitor import AstNodeVisitor
 
 
@@ -22,6 +22,9 @@ class AstPrinter(AstNodeVisitor):
 
     def visit_symbol(self, node: AstSymbol):
         self._print(f'SYMBOL: {node.name}')
+
+    def visit_literal(self, node: AstLiteral):
+        self._print(f'LITERAL: {node.value_id}')
 
     def visit_if_statement(self, node: AstIfStatement):
         self._print('IF STATEMENT')

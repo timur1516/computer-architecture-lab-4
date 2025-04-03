@@ -22,6 +22,11 @@ class AstSymbol(Ast):
         self.name = name
 
 
+class AstLiteral(Ast):
+    def __init__(self, value_id: int):
+        self.value_id = value_id
+
+
 class AstBlock(Ast):
     def __init__(self, children: List[Ast]):
         self.children = children

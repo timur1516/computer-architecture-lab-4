@@ -4,6 +4,7 @@ from enum import Enum
 class TokenType(str, Enum):
     NUMBER = 'NUMBER'
     SYMBOL = 'SYMBOL'
+    LITERAL = 'LITERAL'
     PLUS = '+'
     MINUS = '-'
     MUL = '*'
@@ -19,6 +20,8 @@ class TokenType(str, Enum):
     LESS_EQUAL = '<='
     PRINT = '.'
     READ = ','
+    PRINT_STR_BEGIN = '."'
+    PRINT_STR_END = '"'
     STORE = '!'
     LOAD = '@'
     IF = 'if'

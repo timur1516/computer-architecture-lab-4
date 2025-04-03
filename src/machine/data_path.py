@@ -1,7 +1,7 @@
 from typing import List
 
 from src.isa.isa import Register, Opcode
-from src.isa.memory_config import INPUT_ADDRESS, OUTPUT_ADDRESS
+from src.isa.memory_config import INPUT_ADDRESS, OUTPUT_ADDRESS, DATA_AREA_START_ADDR
 
 ALU_OPCODE_OPERATORS = {
     Opcode.ADD: lambda left, right: left + right,
@@ -34,9 +34,10 @@ class DataPath:
 
     negative_flag = None
 
-    def __init__(self, data_memory_size: int, input_buffer: List[chr]) -> None:
+    def __init__(self, data_memory_size: int, input_buffer: List[chr], init_data_memory: List[int]) -> None:
         self.data_memory_size = data_memory_size
-        self.data_memory = [0] * data_memory_size
+        self.data_memory = [0] * DATA_AREA_START_ADDR + init_data_memory + [0] * (
+                    data_memory_size - len(init_data_memory))
         self.data_address = 0
         self.input_buffer = input_buffer
         self.output_buffer = []
@@ -110,9 +111,7 @@ class DataPath:
 
         # TODO: handle overflow
 
-        if result_val == 0:
-            self.zero_flag = True
-        if result_val < 0:
-            self.negative_flag = True
+        self.zero_flag = result_val == 0
+        self.negative_flag = result_val < 0
 
         return result_val

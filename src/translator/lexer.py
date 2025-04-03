@@ -20,11 +20,13 @@ def is_number(value: str) -> bool:
 
 
 class Lexer:
+    literal_mode = None
 
     def __init__(self, text):
         self.text = text
         self.pos = 0
         self.current_char = self.text[self.pos] if len(self.text) > 0 else None
+        self.literal_mode = False
 
     def next_char(self):
         self.pos += 1
@@ -44,20 +46,36 @@ class Lexer:
             self.next_char()
         return result
 
+    def parse_literal(self):
+        literal = ''
+        while self.current_char is not None and self.current_char != '"':
+            literal += self.current_char
+            self.next_char()
+        return literal[1:-1]
+
     def get_next_token(self):
         while self.current_char is not None:
+
+            if self.literal_mode:
+                value = self.parse_literal()
+                self.literal_mode = False
+                return Token(TokenType.LITERAL, value)
+
             if self.current_char.isspace():
                 self.skip_whitespace()
                 continue
 
             word = self.parse_word()
 
+            if word == '."':
+                self.literal_mode = True
+
             if is_simple_token_type(word):
-                return Token(TokenType(word))
+                return Token(TokenType(word), word)
 
             if is_number(word):
                 return Token(TokenType.NUMBER, word)
 
             return Token(TokenType.SYMBOL, word)
 
-        return Token(TokenType.EOF)
+        return Token(TokenType.EOF, 'eof')

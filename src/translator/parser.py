@@ -1,5 +1,5 @@
 from src.translator.ast.__ast import AstBlock, AstNumber, AstOperation, AstSymbol, AstIfStatement, AstWhileStatement, \
-    AstVariableDeclaration, AstDefinition, Ast
+    AstVariableDeclaration, AstDefinition, Ast, AstLiteral
 from src.translator.lexer import Lexer
 from src.translator.token.grammar_start_tokens import *
 from src.translator.token.token_type import TokenType
@@ -11,6 +11,7 @@ class Parser:
         self.current_token = lexer.get_next_token()
         self.symbol_table = []
         self.definitions = {}
+        self.literals = []
 
     def compare_and_next(self, expected_token_type: TokenType):
         if self.current_token.type != expected_token_type:
@@ -29,7 +30,7 @@ class Parser:
         self.compare_and_next(TokenType.EOF)
         return AstBlock(children)
 
-    def term(self) -> Ast:
+    def term(self) -> Ast | None:
         token = self.current_token
         if token.type in word_start_tokens:
             return self.word()
@@ -62,7 +63,7 @@ class Parser:
             return AstSymbol(word)
         raise SyntaxError(f'Symbol >{word}< is not defined')
 
-    def statement(self) -> AstIfStatement | AstWhileStatement | AstVariableDeclaration | AstDefinition:
+    def statement(self) -> AstIfStatement | AstWhileStatement | AstVariableDeclaration | AstDefinition | None:
         token = self.current_token
         if token.type == TokenType.VAR:
             self.compare_and_next(TokenType.VAR)
@@ -124,11 +125,19 @@ class Parser:
 
         self.definitions[name] = block
 
-        # return AstDefinition(name, block)
-
-    def operation(self):
+    def operation(self) -> AstOperation | AstLiteral:
         token = self.current_token
+        if token.type is TokenType.PRINT_STR_BEGIN:
+            return self.literal()
         if token.type in operation_start_tokens:
             self.compare_and_next(token.type)
             return AstOperation(token.type)
         raise SyntaxError(f'Unexpected token: {token}')
+
+    def literal(self) -> AstLiteral:
+        self.compare_and_next(TokenType.PRINT_STR_BEGIN)
+        value = self.current_token.value
+        self.compare_and_next(TokenType.LITERAL)
+        self.compare_and_next(TokenType.PRINT_STR_END)
+        self.literals.append(value)
+        return AstLiteral(len(self.literals) - 1)

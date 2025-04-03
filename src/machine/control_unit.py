@@ -159,7 +159,7 @@ class ControlUnit:
                     return
 
     def __repr__(self):
-        state_repr = "TICK: {:3} PC: {:3}/{} ADDR: {:3} MEM_OUT: {:3} T0: {:3} T1: {:3} T2: {:3} SP: {:3}".format(
+        state_repr = "TICK: {:3} PC: {:3}/{} ADDR: {:3} MEM_OUT: {:3} T0: {:3} T1: {:3} T2: {:3} T3: {:3} SP: {:3}".format(
             self._tick,
             self.program_counter,
             self.step,
@@ -168,6 +168,7 @@ class ControlUnit:
             self.data_path.registers[Register.T0],
             self.data_path.registers[Register.T1],
             self.data_path.registers[Register.T2],
+            self.data_path.registers[Register.T3],
             self.data_path.registers[Register.SP],
         )
 
