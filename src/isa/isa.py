@@ -2,8 +2,9 @@ import json
 from enum import Enum
 from typing import List
 
-from src.isa.bin_utils import extract_bits, binary_to_signed_int, is_correct_bin_size_signed, to_bin_word
-from src.isa.memory_config import DATA_AREA_START_ADDR
+from src.isa.bin_utils import extract_bits, binary_to_signed_int, is_correct_bin_size_signed, int_to_bin_word, \
+    bytes_to_int_array
+from src.isa.memory_config import DATA_AREA_START_ADDR, INTERRUPT_VECTORS_NUMBER
 
 
 class Opcode(str, Enum):
@@ -35,6 +36,7 @@ class Opcode(str, Enum):
     # BLE = 'ble'
 
     HALT = 'halt'
+    RINT = 'rint'
 
     def __str__(self) -> str:
         return self.value
@@ -46,6 +48,7 @@ class Register(str, Enum):
     T2 = 't2'
     T3 = 't3'
     SP = 'sp'
+    RA = 'ra'
     ZERO = 'zero'
 
     def __str__(self) -> str:
@@ -307,6 +310,7 @@ opcode_to_binary = {
     Opcode.BEQ: 0x10,
     Opcode.BNE: 0x11,
     Opcode.HALT: 0x12,
+    Opcode.RINT: 0x13,
 }
 
 binary_to_opcode = {
@@ -328,6 +332,7 @@ binary_to_opcode = {
     0x10: Opcode.BEQ,
     0x11: Opcode.BNE,
     0x12: Opcode.HALT,
+    0x13: Opcode.RINT,
 }
 
 register_to_binary = {
@@ -336,7 +341,8 @@ register_to_binary = {
     Register.T2: 0x3,
     Register.T3: 0x4,
     Register.SP: 0x5,
-    Register.ZERO: 0x6
+    Register.RA: 0x6,
+    Register.ZERO: 0x7
 }
 
 binary_to_register = {
@@ -346,7 +352,8 @@ binary_to_register = {
     0x3: Register.T2,
     0x4: Register.T3,
     0x5: Register.SP,
-    0x6: Register.ZERO
+    0x6: Register.RA,
+    0x7: Register.ZERO
 }
 
 opcode_to_instruction_type = {
@@ -373,41 +380,53 @@ opcode_to_instruction_type = {
     Opcode.BNE: BInstruction,
 
     Opcode.HALT: Instruction,
+    Opcode.RINT: Instruction
 }
 
 
-def to_bytes(code: List[Instruction], data: List[int]) -> bytes:
+def to_bytes(code: List[Instruction], data: List[int], interrupt_vectors: List[int], is_interrupts_enabled) -> bytes:
     binary_code = bytearray()
 
+    binary_code.extend(int_to_bin_word(int(is_interrupts_enabled)))
+
+    for vector in interrupt_vectors:
+        binary_code.extend(int_to_bin_word(vector))
+
     data_len = len(data)
-    binary_code.extend(to_bin_word(data_len))
+    binary_code.extend(int_to_bin_word(data_len))
 
     for word in data:
-        binary_code.extend(to_bin_word(word))
+        binary_code.extend(int_to_bin_word(word))
 
     for instr in code:
         binary_instr = instr.to_binary()
-        binary_code.extend(to_bin_word(binary_instr))
+        binary_code.extend(int_to_bin_word(binary_instr))
 
     return bytes(binary_code)
 
 
-def to_hex(code: List[Instruction], data: List[int]) -> str:
-    binary_code = to_bytes(code, data)
+def to_hex(binary_code: bytes) -> str:
     result = []
     data_address = DATA_AREA_START_ADDR
     instruction_address = 0
 
-    data_len = int.from_bytes(binary_code[:4], 'big')
+    word_list = bytes_to_int_array(binary_code)
+
+    is_interrupts_enabled = bool(word_list[0])
+
+    result.append(f'is interrupts enabled: {is_interrupts_enabled}')
+
+    interrupt_vectors = word_list[1:1 + INTERRUPT_VECTORS_NUMBER]
+
+    result.append('interrupt vectors:')
+    for vector in interrupt_vectors:
+        result.append(f'{vector:08X} - {vector:032b}')
+
+    data_len = word_list[1 + INTERRUPT_VECTORS_NUMBER]
 
     result.append(f'data')
 
-    for i in range(4, data_len * 4 + 1, 4):
-        if i + 3 >= len(binary_code):
-            break
-
-        word = int.from_bytes(binary_code[i:i + 4], 'big')
-
+    for word in word_list[2 + INTERRUPT_VECTORS_NUMBER:data_len + 2 + INTERRUPT_VECTORS_NUMBER]:
         hex_word = f'{word:08X}'
         bin_word = f'{word:032b}'
         line = f'{data_address:3} - {hex_word} - {bin_word}'
@@ -417,12 +436,7 @@ def to_hex(code: List[Instruction], data: List[int]) -> str:
 
     result.append(f'instructions')
 
-    for i in range(4 + data_len * 4, len(binary_code), 4):
-        if i + 3 >= len(binary_code):
-            break
-
-        word = int.from_bytes(binary_code[i:i + 4], 'big')
-
+    for word in word_list[data_len + 2 + INTERRUPT_VECTORS_NUMBER:]:
         opcode_bin = extract_bits(word, 7)
         opcode = binary_to_opcode[opcode_bin]
 
@@ -439,26 +453,23 @@ def to_hex(code: List[Instruction], data: List[int]) -> str:
     return "\n".join(result)
 
 
-def from_bytes(binary_code) -> (List[Instruction], List[int]):
+def from_bytes(binary_code) -> (List[Instruction], List[int], List[int]):
     instructions = []
     data = []
+    interrupt_vectors = []
 
-    data_len = int.from_bytes(binary_code[:4], 'big')
+    word_list = bytes_to_int_array(binary_code)
 
-    for i in range(4, data_len * 4 + 1, 4):
-        if i + 3 >= len(binary_code):
-            break
+    is_interrupts_enabled = bool(word_list[0])
 
-        word = int.from_bytes(binary_code[i:i + 4], 'big')
+    interrupt_vectors = word_list[1:1 + INTERRUPT_VECTORS_NUMBER]
 
+    data_len = word_list[1 + INTERRUPT_VECTORS_NUMBER]
+
+    for word in word_list[2 + INTERRUPT_VECTORS_NUMBER:data_len + 2 + INTERRUPT_VECTORS_NUMBER]:
         data.append(word)
 
-    for i in range(4 + data_len * 4, len(binary_code), 4):
-        if i + 3 >= len(binary_code):
-            break
-
-        word = int.from_bytes(binary_code[i:i + 4], 'big')
-
+    for word in word_list[data_len + 2 + INTERRUPT_VECTORS_NUMBER:]:
         opcode_bin = extract_bits(word, 7)
         opcode = binary_to_opcode[opcode_bin]
 
@@ -467,26 +478,35 @@ def from_bytes(binary_code) -> (List[Instruction], List[int]):
 
         instructions.append(instruction)
 
-    return instructions, data
+    return instructions, data, interrupt_vectors, is_interrupts_enabled
 
 
-def write_json(filename: str, code: List[Instruction], data_memory: List[int]):
+def write_json(filename: str, code: List[Instruction], data_memory: List[int], interrupt_vectors: List[int],
+               is_interrupts_enabled: bool):
     data_address = DATA_AREA_START_ADDR
     instruction_address = 0
+    interrupt_vectors_buf = []
     data_buf = []
     instructions_buf = []
 
+    for vector in interrupt_vectors:
+        interrupt_vectors_buf.append(json.dumps({"vector": vector}))
+
+    for word in enumerate(data_memory):
+        data_buf.append(json.dumps({"address": data_address, "word": word}))
+        data_address += 1
+
+    for i, instr in enumerate(code):
+        instructions_buf.append(json.dumps({"address": instruction_address, **instr.to_json()}))
+        instruction_address += 1
+
     with open(filename, "w", encoding="utf-8") as file:
-        for word in enumerate(data_memory):
-            data_buf.append(json.dumps({"address": data_address, "word": word}))
-            data_address += 1
-
-        for i, instr in enumerate(code):
-            instructions_buf.append(json.dumps({"address": instruction_address, **instr.to_json()}))
-            instruction_address += 1
-
         file.write(
             f'''{{
+    "is_interrupts_enabled": {str.lower(str(is_interrupts_enabled))},
+    "interrupt_vectors": [
+        {",\n\t\t".join(interrupt_vectors_buf)}
+    ],
     "data": [
         {",\n\t\t".join(data_buf)}
     ],

@@ -32,6 +32,11 @@ class AstBlock(Ast):
         self.children = children
 
 
+class AstInterrupt(Ast):
+    def __init__(self, block: AstBlock):
+        self.block = block
+
+
 class AstVariableDeclaration(Ast):
     def __init__(self, name: str):
         self.name = name

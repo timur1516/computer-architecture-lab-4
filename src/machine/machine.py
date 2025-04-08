@@ -6,12 +6,17 @@ from src.machine.control_unit import ControlUnit
 from src.machine.data_path import DataPath
 
 
-def simulation(code: List[Instruction], input_tokens: List[chr], init_data_memory: List[int], data_memory_size: int,
+def simulation(code: List[Instruction],
+               input_timetable: List[tuple[int, chr]],
+               init_data_memory: List[int],
+               interrupt_vectors: List[int],
+               is_interrupts_enabled: bool,
+               data_memory_size: int,
                limit: int) -> List[chr]:
     assert len(init_data_memory) <= data_memory_size, 'memory overflow'
 
-    data_path = DataPath(data_memory_size, input_tokens, init_data_memory)
-    control_unit = ControlUnit(code, data_path)
+    data_path = DataPath(data_memory_size, init_data_memory, interrupt_vectors)
+    control_unit = ControlUnit(code, data_path, input_timetable, is_interrupts_enabled)
 
     print(control_unit)
     try:
@@ -32,18 +37,20 @@ def simulation(code: List[Instruction], input_tokens: List[chr], init_data_memor
 def main(code_file: str, input_file: str):
     with open(code_file, "rb") as file:
         binary_code = file.read()
-    code, data_memory = from_bytes(binary_code)
+    code, data_memory, interrupt_vectors, is_interrupts_enabled = from_bytes(binary_code)
 
-    with open(input_file, encoding="utf-8") as file:
-        input_text = file.read()
-        input_tokens = []
-        for char in input_text:
-            input_tokens.append(char)
+    input_timetable = []
+    with open(input_file, 'r', encoding="utf-8") as f:
+        for line in f:
+            num, char = line.strip().split()
+            input_timetable.append((int(num), char))
 
     output = simulation(
         code,
-        input_tokens,
+        input_timetable,
         data_memory,
+        interrupt_vectors,
+        is_interrupts_enabled,
         data_memory_size=100,
         limit=2000,
     )

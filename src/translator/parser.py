@@ -1,5 +1,5 @@
 from src.translator.ast.__ast import AstBlock, AstNumber, AstOperation, AstSymbol, AstIfStatement, AstWhileStatement, \
-    AstVariableDeclaration, AstDefinition, Ast, AstLiteral
+    AstVariableDeclaration, AstDefinition, Ast, AstLiteral, AstInterrupt
 from src.translator.lexer import Lexer
 from src.translator.token.grammar_start_tokens import *
 from src.translator.token.token_type import TokenType
@@ -36,7 +36,15 @@ class Parser:
             return self.word()
         if token.type in statement_start_tokens:
             return self.statement()
+        if token.type is TokenType.BEGIN_INT:
+            return self.interrupt()
         raise SyntaxError(f'Unexpected token: {token}')
+
+    def interrupt(self) -> AstInterrupt:
+        self.compare_and_next(TokenType.BEGIN_INT)
+        block = self.block()
+        self.compare_and_next(TokenType.END_INT)
+        return AstInterrupt(block)
 
     def word(self) -> AstNumber | AstSymbol | AstOperation:
         token = self.current_token

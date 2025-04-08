@@ -6,8 +6,8 @@ from src.isa.bin_utils import is_correct_bin_size_signed, extract_bits
 from src.isa.isa import Instruction, RInstruction, SInstruction, Register, Opcode, IInstruction, BInstruction, \
     UInstruction
 from src.isa.isa import to_bytes, to_hex, write_json
-from src.isa.memory_config import DATA_AREA_START_ADDR, INPUT_ADDRESS, OUTPUT_ADDRESS
-from src.translator.ast.__ast import AstLiteral
+from src.isa.memory_config import DATA_AREA_START_ADDR, INPUT_ADDRESS, OUTPUT_ADDRESS, INTERRUPT_VECTORS_NUMBER
+from src.translator.ast.__ast import AstLiteral, AstInterrupt
 from src.translator.ast.ast_node_visitor import AstBlock, AstNumber, AstOperation, AstSymbol, AstIfStatement, \
     AstWhileStatement, AstVariableDeclaration, AstDefinition, Ast, AstNodeVisitor
 from src.translator.ast.ast_printer import AstPrinter
@@ -45,15 +45,31 @@ class Translator(AstNodeVisitor):
     symbol_table = None
     literals = None
     data = None
+    instructions = None
+    interrupts = None
+    interrupt_vectors = None
+    is_interrupts_enabled = None
 
     def __init__(self, tree: Ast, symbol_table: List[str], literals: List[str]):
         self.tree = tree
         self.symbol_table = symbol_table
         self.literals = literals
         self.data = [0] * len(symbol_table)
+        self.instructions = []
+        self.interrupts = []
+        self.interrupt_vectors = [0] * INTERRUPT_VECTORS_NUMBER
+        self.is_interrupts_enabled = False
 
     def translate(self):
-        return self.visit(self.tree) + [Instruction(Opcode.HALT)]
+        self.instructions = self.visit(self.tree)
+        self.instructions.append(Instruction(Opcode.HALT))
+
+        if len(self.interrupts) > 0:
+            self.is_interrupts_enabled = True
+            self.interrupt_vectors[0] = len(self.instructions)
+            self.instructions += self.interrupts
+
+        return self.instructions
 
     def visit_operation(self, node: AstOperation) -> List[Instruction]:
         assert node.token_type in OPERATION_TRANSLATION, 'unsupported operation'
@@ -85,6 +101,11 @@ class Translator(AstNodeVisitor):
             result += self.visit(block)
 
         return result
+
+    def visit_interrupt(self, node: AstInterrupt) -> List[Instruction]:
+        self.interrupts += self.visit_block(node.block)
+        self.interrupts.append(Instruction(Opcode.RINT))
+        return []
 
     def visit_symbol(self, node: AstSymbol) -> List[Instruction]:
         symbol_address = DATA_AREA_START_ADDR + self.symbol_table.index(node.name)
@@ -145,7 +166,7 @@ class Translator(AstNodeVisitor):
         return []
 
 
-def translate(text: str) -> (List[Instruction], List[int]):
+def translate(text: str) -> (List[Instruction], List[int], List[int], bool):
     ast_printer = AstPrinter()
     parser = Parser(Lexer(text))
 
@@ -157,16 +178,17 @@ def translate(text: str) -> (List[Instruction], List[int]):
     translator = Translator(tree, parser.symbol_table, parser.literals)
     program = translator.translate()
 
-    return program, translator.data
+    return program, translator.data, translator.interrupt_vectors, translator.is_interrupts_enabled
 
 
 def main(source: str, target: str):
     with open(source, encoding="utf-8") as f:
         source = f.read()
 
-    code, data = translate(source)
-    binary_code = to_bytes(code, data)
-    hex_code = to_hex(code, data)
+    code, data, interrupt_vectors, is_interrupts_enabled = translate(source)
+
+    binary_code = to_bytes(code, data, interrupt_vectors, is_interrupts_enabled)
+    hex_code = to_hex(binary_code)
 
     os.makedirs(os.path.dirname(os.path.abspath(target)) or ".", exist_ok=True)
 
@@ -176,7 +198,7 @@ def main(source: str, target: str):
         with open(target + ".hex", "w") as f:
             f.write(hex_code)
     else:
-        write_json(target, code, data)
+        write_json(target, code, data, interrupt_vectors, is_interrupts_enabled)
 
     print("source LoC:", len(source.split("\n")), "code instr:", len(code))
 

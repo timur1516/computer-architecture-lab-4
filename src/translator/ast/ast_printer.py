@@ -1,5 +1,5 @@
 from src.translator.ast.__ast import AstBlock, AstNumber, AstOperation, AstSymbol, AstIfStatement, AstWhileStatement, \
-    AstVariableDeclaration, AstDefinition, Ast, AstLiteral
+    AstVariableDeclaration, AstDefinition, Ast, AstLiteral, AstInterrupt
 from src.translator.ast.ast_node_visitor import AstNodeVisitor
 
 
@@ -19,6 +19,13 @@ class AstPrinter(AstNodeVisitor):
     def visit_block(self, node: AstBlock):
         for block in node.children:
             self.visit(block)
+
+    def visit_interrupt(self, node: AstInterrupt):
+        self._print('INTERRUPT')
+        self.tab += 1
+        self.visit_block(node.block)
+        self.tab -= 1
+        self._print('END INTERRUPT')
 
     def visit_symbol(self, node: AstSymbol):
         self._print(f'SYMBOL: {node.name}')

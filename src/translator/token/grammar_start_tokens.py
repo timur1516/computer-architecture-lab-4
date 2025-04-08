@@ -18,6 +18,6 @@ operation_start_tokens = (memory_operation_start_tokens +
 word_start_tokens = [TokenType.SYMBOL, TokenType.NUMBER] + operation_start_tokens
 
 term_start_tokens = (word_start_tokens +
-                     statement_start_tokens)
+                     statement_start_tokens + [TokenType.BEGIN_INT])
 
 program_start_tokens = term_start_tokens

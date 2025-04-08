@@ -1,7 +1,7 @@
 from typing import List
 
 from src.isa.isa import Register, Opcode
-from src.isa.memory_config import INPUT_ADDRESS, OUTPUT_ADDRESS, DATA_AREA_START_ADDR
+from src.isa.memory_config import INPUT_ADDRESS, OUTPUT_ADDRESS, INTERRUPT_VECTORS_START_ADDR, INTERRUPT_VECTORS_NUMBER
 
 ALU_OPCODE_OPERATORS = {
     Opcode.ADD: lambda left, right: left + right,
@@ -34,12 +34,17 @@ class DataPath:
 
     negative_flag = None
 
-    def __init__(self, data_memory_size: int, input_buffer: List[chr], init_data_memory: List[int]) -> None:
+    def __init__(self, data_memory_size: int, init_data_memory: List[int], interrupt_vectors: List[int]) -> None:
         self.data_memory_size = data_memory_size
-        self.data_memory = [0] * DATA_AREA_START_ADDR + init_data_memory + [0] * (
-                    data_memory_size - len(init_data_memory))
+        self.data_memory = (
+                [0] * INTERRUPT_VECTORS_START_ADDR +
+                interrupt_vectors +
+                [0] * (INTERRUPT_VECTORS_NUMBER - len(interrupt_vectors)) +
+                init_data_memory +
+                [0] * (data_memory_size - len(init_data_memory))
+        )
         self.data_address = 0
-        self.input_buffer = input_buffer
+        self.input_buffer = ''
         self.output_buffer = []
         self.registers = {r: 0 for r in Register}
         self.registers[Register.SP] = self.data_memory_size
@@ -64,10 +69,9 @@ class DataPath:
         if self.data_address == OUTPUT_ADDRESS:
             raise RuntimeError('Reading from OUTPUT_ADDRESS is forbidden')
         if self.data_address == INPUT_ADDRESS:
-            if len(self.input_buffer) == 0:
+            if self.input_buffer == '':
                 raise EOFError()
-            symbol = self.input_buffer.pop(0)
-            value = ord(symbol)
+            value = ord(self.input_buffer)
 
         else:
             value = self.data_memory[self.data_address]
@@ -87,6 +91,9 @@ class DataPath:
     def signal_store_pc_plus_1(self, old_pc: int, rd: Register):
         new_pc = old_pc + 1
         self._write_to_reg(rd, new_pc)
+
+    def signal_store_pc(self, old_pc: int, rd: Register):
+        self._write_to_reg(rd, old_pc)
 
     def signal_update_pc_inc(self, old_pc: int) -> int:
         new_pc = old_pc + 1

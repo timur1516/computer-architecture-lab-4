@@ -1,5 +1,5 @@
 from src.translator.ast.__ast import AstBlock, AstNumber, AstOperation, AstSymbol, AstIfStatement, AstWhileStatement, \
-    AstVariableDeclaration, AstDefinition, Ast, AstLiteral
+    AstVariableDeclaration, AstDefinition, Ast, AstLiteral, AstInterrupt
 
 
 class AstNodeVisitor:
@@ -10,6 +10,8 @@ class AstNodeVisitor:
             return self.visit_number(node)
         if isinstance(node, AstBlock):
             return self.visit_block(node)
+        if isinstance(node, AstInterrupt):
+            return self.visit_interrupt(node)
         if isinstance(node, AstSymbol):
             return self.visit_symbol(node)
         if isinstance(node, AstLiteral):
@@ -30,6 +32,9 @@ class AstNodeVisitor:
         pass
 
     def visit_block(self, node: AstBlock):
+        pass
+
+    def visit_interrupt(self, node: AstInterrupt):
         pass
 
     def visit_symbol(self, node: AstSymbol):

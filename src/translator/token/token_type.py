@@ -5,6 +5,8 @@ class TokenType(str, Enum):
     NUMBER = 'NUMBER'
     SYMBOL = 'SYMBOL'
     LITERAL = 'LITERAL'
+    BEGIN_INT = 'begin_int'
+    END_INT = 'end_int'
     PLUS = '+'
     MINUS = '-'
     MUL = '*'
