@@ -1,7 +1,5 @@
 from src.translator.token.token_type import TokenType
 
-statement_start_tokens = [TokenType.COLON, TokenType.VAR]
-
 memory_operation_start_tokens = [TokenType.STORE, TokenType.LOAD]
 io_operation_start_tokens = [TokenType.PRINT, TokenType.READ, TokenType.PRINT_STR_BEGIN]
 logical_operation_start_tokens = [TokenType.EQUALS, TokenType.NOT_EQUALS, TokenType.LESS, TokenType.GREATER,
@@ -17,7 +15,10 @@ operation_start_tokens = (memory_operation_start_tokens +
 
 word_start_tokens = [TokenType.SYMBOL, TokenType.NUMBER] + operation_start_tokens
 
+statement_start_tokens = [TokenType.COLON, TokenType.VAR, TokenType.BEGIN_INT]
+statement_body_start_tokens = word_start_tokens + [TokenType.IF, TokenType.BEGIN]
+
 term_start_tokens = (word_start_tokens +
-                     statement_start_tokens + [TokenType.BEGIN_INT])
+                     statement_start_tokens)
 
 program_start_tokens = term_start_tokens

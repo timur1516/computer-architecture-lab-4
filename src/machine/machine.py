@@ -1,7 +1,8 @@
 import sys
 from typing import List
 
-from src.isa.isa import from_bytes, Instruction
+from src.isa.instructions.instruction import Instruction
+from src.isa.util.data_translators import from_bytes
 from src.machine.control_unit import ControlUnit
 from src.machine.data_path import DataPath
 
@@ -9,14 +10,14 @@ from src.machine.data_path import DataPath
 def simulation(code: List[Instruction],
                input_timetable: List[tuple[int, chr]],
                init_data_memory: List[int],
-               interrupt_vectors: List[int],
+               interrupt_handler_address: int,
                is_interrupts_enabled: bool,
                data_memory_size: int,
                limit: int) -> List[chr]:
     assert len(init_data_memory) <= data_memory_size, 'memory overflow'
 
-    data_path = DataPath(data_memory_size, init_data_memory, interrupt_vectors)
-    control_unit = ControlUnit(code, data_path, input_timetable, is_interrupts_enabled)
+    data_path = DataPath(data_memory_size, init_data_memory)
+    control_unit = ControlUnit(code, data_path, input_timetable, is_interrupts_enabled, interrupt_handler_address)
 
     print(control_unit)
     try:
@@ -37,7 +38,7 @@ def simulation(code: List[Instruction],
 def main(code_file: str, input_file: str):
     with open(code_file, "rb") as file:
         binary_code = file.read()
-    code, data_memory, interrupt_vectors, is_interrupts_enabled = from_bytes(binary_code)
+    code, data_memory, interrupt_handler_address, is_interrupts_enabled = from_bytes(binary_code)
 
     input_timetable = []
     with open(input_file, 'r', encoding="utf-8") as f:
@@ -49,7 +50,7 @@ def main(code_file: str, input_file: str):
         code,
         input_timetable,
         data_memory,
-        interrupt_vectors,
+        interrupt_handler_address,
         is_interrupts_enabled,
         data_memory_size=100,
         limit=2000,

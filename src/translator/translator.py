@@ -2,11 +2,18 @@ import os
 import sys
 from typing import List
 
-from src.isa.bin_utils import is_correct_bin_size_signed, extract_bits
-from src.isa.isa import Instruction, RInstruction, SInstruction, Register, Opcode, IInstruction, BInstruction, \
-    UInstruction
-from src.isa.isa import to_bytes, to_hex, write_json
-from src.isa.memory_config import DATA_AREA_START_ADDR, INPUT_ADDRESS, OUTPUT_ADDRESS, INTERRUPT_VECTORS_NUMBER
+from src.isa.instructions.b_instruction import BInstruction
+from src.isa.instructions.i_instruction import IInstruction
+from src.isa.instructions.instruction import Instruction
+from src.isa.instructions.j_instruction import JInstruction
+from src.isa.instructions.r_instruction import RInstruction
+from src.isa.instructions.s_instruction import SInstruction
+from src.isa.instructions.u_instruction import UInstruction
+from src.isa.memory_config import DATA_AREA_START_ADDR, INPUT_ADDRESS, OUTPUT_ADDRESS
+from src.isa.opcode import Opcode
+from src.isa.register import Register
+from src.isa.util.binary import is_correct_bin_size_signed, extract_bits
+from src.isa.util.data_translators import to_bytes, to_hex, write_json
 from src.translator.ast.__ast import AstLiteral, AstInterrupt
 from src.translator.ast.ast_node_visitor import AstBlock, AstNumber, AstOperation, AstSymbol, AstIfStatement, \
     AstWhileStatement, AstVariableDeclaration, AstDefinition, Ast, AstNodeVisitor
@@ -17,25 +24,198 @@ from src.translator.token.token_type import TokenType
 
 OPERATION_TRANSLATION = {
     TokenType.PLUS: [
-        SInstruction(Opcode.LW, Register.T0, Register.SP, None),
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
         IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
-        SInstruction(Opcode.LW, Register.T1, Register.SP, None),
+
+        IInstruction(Opcode.LW, Register.T1, Register.SP, 0),
         IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
         RInstruction(Opcode.ADD, Register.T0, Register.T1, Register.T0),
+
         IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
-        SInstruction(Opcode.SW, None, Register.SP, Register.T0)
+        SInstruction(Opcode.SW, Register.SP, Register.T0)
+    ],
+    TokenType.MINUS: [
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        IInstruction(Opcode.LW, Register.T1, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        RInstruction(Opcode.SUB, Register.T0, Register.T1, Register.T0),
+
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+        SInstruction(Opcode.SW, Register.SP, Register.T0)
+    ],
+    TokenType.MUL: [
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        IInstruction(Opcode.LW, Register.T1, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        RInstruction(Opcode.MUL, Register.T0, Register.T1, Register.T0),
+
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+        SInstruction(Opcode.SW, Register.SP, Register.T0)
+    ],
+    TokenType.DIV: [
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        IInstruction(Opcode.LW, Register.T1, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        RInstruction(Opcode.DIV, Register.T0, Register.T1, Register.T0),
+
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+        SInstruction(Opcode.SW, Register.SP, Register.T0)
+    ],
+    TokenType.DUP: [
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
+
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+        SInstruction(Opcode.SW, Register.SP, Register.T0)
+    ],
+    TokenType.DROP: [
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1)
+    ],
+    TokenType.SWAP: [
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        IInstruction(Opcode.LW, Register.T1, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+        SInstruction(Opcode.SW, Register.SP, Register.T0),
+
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+        SInstruction(Opcode.SW, Register.SP, Register.T1)
+    ],
+    TokenType.EQUALS: [
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        IInstruction(Opcode.LW, Register.T1, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        BInstruction(Opcode.BEQ, Register.T0, Register.T1, 3),
+        IInstruction(Opcode.ADDI, Register.T3, Register.ZERO, 0),
+        JInstruction(Opcode.J, 2),
+        IInstruction(Opcode.ADDI, Register.T3, Register.ZERO, 1),
+
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+        SInstruction(Opcode.SW, Register.SP, Register.T3)
+    ],
+    TokenType.NOT_EQUALS: [
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        IInstruction(Opcode.LW, Register.T1, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        BInstruction(Opcode.BNE, Register.T0, Register.T1, 3),
+        IInstruction(Opcode.ADDI, Register.T3, Register.ZERO, 0),
+        JInstruction(Opcode.J, 2),
+        IInstruction(Opcode.ADDI, Register.T3, Register.ZERO, 1),
+
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+        SInstruction(Opcode.SW, Register.SP, Register.T3)
+    ],
+    TokenType.GREATER: [
+        IInstruction(Opcode.LW, Register.T1, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        BInstruction(Opcode.BGT, Register.T0, Register.T1, 3),
+        IInstruction(Opcode.ADDI, Register.T3, Register.ZERO, 0),
+        JInstruction(Opcode.J, 2),
+        IInstruction(Opcode.ADDI, Register.T3, Register.ZERO, 1),
+
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+        SInstruction(Opcode.SW, Register.SP, Register.T3)
+    ],
+    TokenType.LESS: [
+        IInstruction(Opcode.LW, Register.T1, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        BInstruction(Opcode.BLT, Register.T0, Register.T1, 3),
+        IInstruction(Opcode.ADDI, Register.T3, Register.ZERO, 0),
+        JInstruction(Opcode.J, 2),
+        IInstruction(Opcode.ADDI, Register.T3, Register.ZERO, 1),
+
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+        SInstruction(Opcode.SW, Register.SP, Register.T3)
+    ],
+    TokenType.GREATER_EQUAL: [
+        IInstruction(Opcode.LW, Register.T1, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        BInstruction(Opcode.BGT, Register.T0, Register.T1, 4),
+        BInstruction(Opcode.BEQ, Register.T0, Register.T1, 3),
+        IInstruction(Opcode.ADDI, Register.T3, Register.ZERO, 0),
+        JInstruction(Opcode.J, 2),
+        IInstruction(Opcode.ADDI, Register.T3, Register.ZERO, 1),
+
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+        SInstruction(Opcode.SW, Register.SP, Register.T3)
+    ],
+    TokenType.LESS_EQUAL: [
+        IInstruction(Opcode.LW, Register.T1, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        BInstruction(Opcode.BLT, Register.T0, Register.T1, 4),
+        BInstruction(Opcode.BEQ, Register.T0, Register.T1, 3),
+        IInstruction(Opcode.ADDI, Register.T3, Register.ZERO, 0),
+        JInstruction(Opcode.J, 2),
+        IInstruction(Opcode.ADDI, Register.T3, Register.ZERO, 1),
+
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+        SInstruction(Opcode.SW, Register.SP, Register.T3)
     ],
     TokenType.PRINT: [
-        SInstruction(Opcode.LW, Register.T0, Register.SP, None),
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
         IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
         IInstruction(Opcode.ADDI, Register.T1, Register.ZERO, OUTPUT_ADDRESS),
-        SInstruction(Opcode.SW, None, Register.T1, Register.T0)
+        SInstruction(Opcode.SW, Register.T1, Register.T0)
     ],
     TokenType.READ: [
         IInstruction(Opcode.ADDI, Register.T1, Register.ZERO, INPUT_ADDRESS),
-        SInstruction(Opcode.LW, Register.T0, Register.T1, None),
+        IInstruction(Opcode.LW, Register.T0, Register.T1, 0),
+
         IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
-        SInstruction(Opcode.SW, None, Register.SP, Register.T0)
+        SInstruction(Opcode.SW, Register.SP, Register.T0)
+    ],
+    TokenType.STORE: [
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        IInstruction(Opcode.LW, Register.T1, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        SInstruction(Opcode.SW, Register.T1, Register.T0)
+    ],
+    TokenType.LOAD: [
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+
+        IInstruction(Opcode.LW, Register.T0, Register.T0, 0),
+
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+        SInstruction(Opcode.SW, Register.SP, Register.T0)
     ]
 }
 
@@ -47,7 +227,7 @@ class Translator(AstNodeVisitor):
     data = None
     instructions = None
     interrupts = None
-    interrupt_vectors = None
+    interrupt_handler_address = None
     is_interrupts_enabled = None
 
     def __init__(self, tree: Ast, symbol_table: List[str], literals: List[str]):
@@ -57,7 +237,7 @@ class Translator(AstNodeVisitor):
         self.data = [0] * len(symbol_table)
         self.instructions = []
         self.interrupts = []
-        self.interrupt_vectors = [0] * INTERRUPT_VECTORS_NUMBER
+        self.interrupt_handler_address = 0
         self.is_interrupts_enabled = False
 
     def translate(self):
@@ -66,7 +246,7 @@ class Translator(AstNodeVisitor):
 
         if len(self.interrupts) > 0:
             self.is_interrupts_enabled = True
-            self.interrupt_vectors[0] = len(self.instructions)
+            self.interrupt_handler_address = len(self.instructions)
             self.instructions += self.interrupts
 
         return self.instructions
@@ -82,7 +262,7 @@ class Translator(AstNodeVisitor):
             return [
                 IInstruction(Opcode.ADDI, Register.T0, Register.ZERO, node.value),
                 IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
-                SInstruction(Opcode.SW, None, Register.SP, Register.T0)
+                SInstruction(Opcode.SW, Register.SP, Register.T0)
             ]
         else:
             lower_value = extract_bits(value, 12)
@@ -91,7 +271,7 @@ class Translator(AstNodeVisitor):
                 UInstruction(Opcode.LUI, Register.T0, upper_value),
                 IInstruction(Opcode.ADDI, Register.T0, Register.T0, lower_value),
                 IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
-                SInstruction(Opcode.SW, None, Register.SP, Register.T0)
+                SInstruction(Opcode.SW, Register.SP, Register.T0)
             ]
 
     def visit_block(self, node: AstBlock) -> List[Instruction]:
@@ -112,7 +292,7 @@ class Translator(AstNodeVisitor):
         return [
             IInstruction(Opcode.ADDI, Register.T0, Register.ZERO, symbol_address),
             IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
-            SInstruction(Opcode.SW, None, Register.SP, Register.T0)
+            SInstruction(Opcode.SW, Register.SP, Register.T0)
         ]
 
     def visit_literal(self, node: AstLiteral) -> List[Instruction]:
@@ -125,12 +305,12 @@ class Translator(AstNodeVisitor):
 
         return [
             IInstruction(Opcode.ADDI, Register.T0, Register.ZERO, address),
-            SInstruction(Opcode.LW, Register.T1, Register.T0, None),
+            IInstruction(Opcode.LW, Register.T1, Register.T0, 0),
 
             IInstruction(Opcode.ADDI, Register.T0, Register.T0, 1),
-            SInstruction(Opcode.LW, Register.T3, Register.T0, None),
+            IInstruction(Opcode.LW, Register.T3, Register.T0, 0),
             IInstruction(Opcode.ADDI, Register.T2, Register.ZERO, OUTPUT_ADDRESS),
-            SInstruction(Opcode.SW, None, Register.T2, Register.T3),
+            SInstruction(Opcode.SW, Register.T2, Register.T3),
 
             IInstruction(Opcode.ADDI, Register.T1, Register.T1, -1),
             BInstruction(Opcode.BNE, Register.T1, Register.ZERO, -5)
@@ -141,20 +321,25 @@ class Translator(AstNodeVisitor):
         else_block_instructions = [] if node.else_block is None else self.visit(node.else_block)
 
         branch_logic_instructions = [
-            SInstruction(Opcode.LW, Register.T0, Register.SP, None),
+            IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
             IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
-            BInstruction(Opcode.BEQ, Register.T0, Register.ZERO, len(if_block_instructions) + 1)
+
+            BInstruction(Opcode.BEQ, Register.T0, Register.ZERO, len(if_block_instructions) + 2)
         ]
 
-        return branch_logic_instructions + if_block_instructions + else_block_instructions
+        return (
+                branch_logic_instructions +
+                if_block_instructions +
+                [JInstruction(Opcode.J, len(else_block_instructions) + 1)] +
+                else_block_instructions
+        )
 
     def visit_while_statement(self, node: AstWhileStatement) -> List[Instruction]:
         while_block_instructions = self.visit(node.while_block)
 
         while_logic_instructions = [
-            SInstruction(Opcode.LW, Register.T0, Register.SP, None),
-            IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
-            BInstruction(Opcode.BEQ, Register.T0, Register.ZERO, -len(while_block_instructions))
+            IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
+            BInstruction(Opcode.BNE, Register.T0, Register.ZERO, -len(while_block_instructions) - 2)
         ]
 
         return while_block_instructions + while_logic_instructions
@@ -178,16 +363,16 @@ def translate(text: str) -> (List[Instruction], List[int], List[int], bool):
     translator = Translator(tree, parser.symbol_table, parser.literals)
     program = translator.translate()
 
-    return program, translator.data, translator.interrupt_vectors, translator.is_interrupts_enabled
+    return program, translator.data, translator.interrupt_handler_address, translator.is_interrupts_enabled
 
 
 def main(source: str, target: str):
     with open(source, encoding="utf-8") as f:
         source = f.read()
 
-    code, data, interrupt_vectors, is_interrupts_enabled = translate(source)
+    code, data, interrupt_handler_address, is_interrupts_enabled = translate(source)
 
-    binary_code = to_bytes(code, data, interrupt_vectors, is_interrupts_enabled)
+    binary_code = to_bytes(code, data, is_interrupts_enabled, interrupt_handler_address)
     hex_code = to_hex(binary_code)
 
     os.makedirs(os.path.dirname(os.path.abspath(target)) or ".", exist_ok=True)
@@ -198,7 +383,7 @@ def main(source: str, target: str):
         with open(target + ".hex", "w") as f:
             f.write(hex_code)
     else:
-        write_json(target, code, data, interrupt_vectors, is_interrupts_enabled)
+        write_json(target, code, data, is_interrupts_enabled, interrupt_handler_address)
 
     print("source LoC:", len(source.split("\n")), "code instr:", len(code))
 

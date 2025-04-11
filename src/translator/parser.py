@@ -36,21 +36,13 @@ class Parser:
             return self.word()
         if token.type in statement_start_tokens:
             return self.statement()
-        if token.type is TokenType.BEGIN_INT:
-            return self.interrupt()
         raise SyntaxError(f'Unexpected token: {token}')
-
-    def interrupt(self) -> AstInterrupt:
-        self.compare_and_next(TokenType.BEGIN_INT)
-        block = self.block()
-        self.compare_and_next(TokenType.END_INT)
-        return AstInterrupt(block)
 
     def word(self) -> AstNumber | AstSymbol | AstOperation:
         token = self.current_token
-        if token.type == TokenType.NUMBER:
+        if token.type is TokenType.NUMBER:
             return self.number()
-        if token.type == TokenType.SYMBOL:
+        if token.type is TokenType.SYMBOL:
             return self.symbol()
         if token.type in operation_start_tokens:
             return self.operation()
@@ -71,15 +63,22 @@ class Parser:
             return AstSymbol(word)
         raise SyntaxError(f'Symbol >{word}< is not defined')
 
-    def statement(self) -> AstIfStatement | AstWhileStatement | AstVariableDeclaration | AstDefinition | None:
+    def statement(
+            self) -> AstIfStatement | AstWhileStatement | AstVariableDeclaration | AstDefinition | AstInterrupt | None:
         token = self.current_token
         if token.type == TokenType.VAR:
-            self.compare_and_next(TokenType.VAR)
             return self.declaration_statement()
         if token.type == TokenType.COLON:
-            self.compare_and_next(TokenType.COLON)
             return self.definition_statement()
+        if token.type is TokenType.BEGIN_INT:
+            return self.interrupt()
         raise SyntaxError(f'Unexpected token: {token}')
+
+    def interrupt(self) -> AstInterrupt:
+        self.compare_and_next(TokenType.BEGIN_INT)
+        block = self.block()
+        self.compare_and_next(TokenType.END_INT)
+        return AstInterrupt(block)
 
     def block(self) -> AstBlock:
         children = []
@@ -88,6 +87,7 @@ class Parser:
         return AstBlock(children)
 
     def if_statement(self) -> AstIfStatement:
+        self.compare_and_next(TokenType.IF)
         if_block = self.block()
         else_block = None
         token = self.current_token
@@ -98,40 +98,50 @@ class Parser:
         return AstIfStatement(if_block, else_block)
 
     def loop_statement(self) -> AstWhileStatement:
+        self.compare_and_next(TokenType.BEGIN)
         while_block = self.block()
         self.compare_and_next(TokenType.UNTIL)
         return AstWhileStatement(while_block)
 
     def declaration_statement(self) -> AstVariableDeclaration:
+        self.compare_and_next(TokenType.VAR)
+
         name = self.current_token.value
         self.compare_and_next(TokenType.SYMBOL)
 
         if name in self.definitions or name in self.symbol_table:
             raise SyntaxError(f'Name >{name}< is already in use')
+
         self.symbol_table.append(name)
 
         return AstVariableDeclaration(name)
 
+    def definition_body(self) -> AstBlock | AstIfStatement | AstWhileStatement:
+        token = self.current_token
+        if token.type in word_start_tokens:
+            return self.block()
+        if token.type is TokenType.IF:
+            return self.if_statement()
+        if token.type is TokenType.BEGIN:
+            return self.loop_statement()
+        raise SyntaxError(f'Unexpected token: {token}')
+
     def definition_statement(self):
+        self.compare_and_next(TokenType.COLON)
+
         name = self.current_token.value
         self.compare_and_next(TokenType.SYMBOL)
 
         if name in self.symbol_table:
             raise SyntaxError(f'Name >{name}< is already in use')
 
-        token = self.current_token
-        block = AstBlock([])
-        if token.type == TokenType.IF:
-            self.compare_and_next(TokenType.IF)
-            block = self.if_statement()
-        elif token.type == TokenType.BEGIN:
-            self.compare_and_next(TokenType.BEGIN)
-            block = self.loop_statement()
-        elif token.type in word_start_tokens:
-            block = self.block()
+        children = []
+        while self.current_token.type in statement_body_start_tokens:
+            children.append(self.definition_body())
+
         self.compare_and_next(TokenType.SEMICOLON)
 
-        self.definitions[name] = block
+        self.definitions[name] = AstBlock(children)
 
     def operation(self) -> AstOperation | AstLiteral:
         token = self.current_token
