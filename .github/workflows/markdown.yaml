@@ -3,14 +3,14 @@ name: Markdown CI
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - ".github/workflows/*"
       - ".markdownlint.yaml"
       - "**/*.md"
   pull_request:
     branches:
-      - master
+      - main
     paths:
       - ".github/workflows/*"
       - ".markdownlint.yaml"
