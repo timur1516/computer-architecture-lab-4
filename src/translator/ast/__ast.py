@@ -1,4 +1,4 @@
-from typing import List
+from __future__ import annotations
 
 from src.translator.token.token_type import TokenType
 
@@ -28,7 +28,7 @@ class AstLiteral(Ast):
 
 
 class AstBlock(Ast):
-    def __init__(self, children: List[Ast]):
+    def __init__(self, children: list[Ast]):
         self.children = children
 
 

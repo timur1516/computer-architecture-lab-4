@@ -1,7 +1,7 @@
 from src.isa.instructions.instruction import Instruction
-from src.isa.opcode import Opcode, opcode_to_binary, binary_to_opcode
-from src.isa.register import Register, register_to_binary, binary_to_register
-from src.isa.util.binary import is_correct_bin_size_signed, extract_bits, binary_to_signed_int
+from src.isa.opcode_ import Opcode, binary_to_opcode, opcode_to_binary
+from src.isa.register import Register, binary_to_register, register_to_binary
+from src.isa.util.binary import binary_to_signed_int, extract_bits, is_correct_bin_size_signed
 
 
 class JRInstruction(Instruction):
@@ -9,7 +9,7 @@ class JRInstruction(Instruction):
     imm = None
 
     def __init__(self, opcode: Opcode, imm: int, rs1: Register):
-        assert is_correct_bin_size_signed(imm, 20), 'imm size in JInstruction with rs1 must be 20 bits'
+        assert is_correct_bin_size_signed(imm, 20), "imm size in JInstruction with rs1 must be 20 bits"
 
         super().__init__(opcode)
         self.rs1 = rs1
@@ -18,13 +18,10 @@ class JRInstruction(Instruction):
     def to_binary(self) -> int:
         imm_lower = extract_bits(self.imm, 5)
         imm_upper = self.imm >> 5
-        return (imm_upper << 17 |
-                register_to_binary[self.rs1] << 12 |
-                imm_lower << 7 |
-                opcode_to_binary[self.opcode])
+        return imm_upper << 17 | register_to_binary[self.rs1] << 12 | imm_lower << 7 | opcode_to_binary[self.opcode]
 
     @staticmethod
-    def from_binary(binary: int) -> 'JRInstruction':
+    def from_binary(binary: int) -> "JRInstruction":
         opcode_bin = extract_bits(binary, 7)
         opcode = binary_to_opcode[opcode_bin]
 
@@ -39,7 +36,7 @@ class JRInstruction(Instruction):
         return JRInstruction(opcode, imm, rs1)
 
     def to_json(self) -> dict:
-        return {'opcode': str(self.opcode), 'rs1': str(self.rs1), 'imm': self.imm}
+        return {"opcode": str(self.opcode), "rs1": str(self.rs1), "imm": self.imm}
 
     def __str__(self) -> str:
-        return f'{str(self.opcode)} {str(self.rs1)} {str(self.imm)}'
+        return f"{self.opcode!s} {self.rs1!s} {self.imm!s}"

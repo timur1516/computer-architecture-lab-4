@@ -1,7 +1,27 @@
-from src.translator.ast.__ast import AstBlock, AstNumber, AstOperation, AstSymbol, AstIfStatement, AstWhileStatement, \
-    AstVariableDeclaration, AstDefinition, Ast, AstLiteral, AstInterrupt
+from __future__ import annotations
+
+from src.translator.ast.__ast import (
+    Ast,
+    AstBlock,
+    AstDefinition,
+    AstIfStatement,
+    AstInterrupt,
+    AstLiteral,
+    AstNumber,
+    AstOperation,
+    AstSymbol,
+    AstVariableDeclaration,
+    AstWhileStatement,
+)
+from src.translator.exceptions.exceptions import NameIsAlreadyInUseError, UndefinedSymbolError, UnexpectedTokenError
 from src.translator.lexer import Lexer
-from src.translator.token.grammar_start_tokens import *
+from src.translator.token.grammar_start_tokens import (
+    operation_start_tokens,
+    statement_body_start_tokens,
+    statement_start_tokens,
+    term_start_tokens,
+    word_start_tokens,
+)
 from src.translator.token.token_type import TokenType
 
 
@@ -15,7 +35,7 @@ class Parser:
 
     def compare_and_next(self, expected_token_type: TokenType):
         if self.current_token.type != expected_token_type:
-            raise SyntaxError(f'Expected {expected_token_type} but got {self.current_token.type}')
+            raise UnexpectedTokenError(self.current_token.type, expected_token_type)
 
         self.current_token = self.lexer.get_next_token()
 
@@ -26,7 +46,8 @@ class Parser:
         children = []
         while self.current_token.type in term_start_tokens:
             term = self.term()
-            if term is not None: children.append(term)
+            if term is not None:
+                children.append(term)
         self.compare_and_next(TokenType.EOF)
         return AstBlock(children)
 
@@ -36,7 +57,7 @@ class Parser:
             return self.word()
         if token.type in statement_start_tokens:
             return self.statement()
-        raise SyntaxError(f'Unexpected token: {token}')
+        raise UnexpectedTokenError(token.type)
 
     def word(self) -> AstNumber | AstSymbol | AstOperation:
         token = self.current_token
@@ -46,7 +67,7 @@ class Parser:
             return self.symbol()
         if token.type in operation_start_tokens:
             return self.operation()
-        raise SyntaxError(f'Unexpected token: {token}')
+        raise UnexpectedTokenError(token.type)
 
     def number(self) -> AstNumber:
         token = self.current_token
@@ -61,10 +82,11 @@ class Parser:
             return self.definitions[word]
         if word in self.symbol_table:
             return AstSymbol(word)
-        raise SyntaxError(f'Symbol >{word}< is not defined')
+        raise UndefinedSymbolError(word)
 
     def statement(
-            self) -> AstIfStatement | AstWhileStatement | AstVariableDeclaration | AstDefinition | AstInterrupt | None:
+        self,
+    ) -> AstIfStatement | AstWhileStatement | AstVariableDeclaration | AstDefinition | AstInterrupt | None:
         token = self.current_token
         if token.type == TokenType.VAR:
             return self.declaration_statement()
@@ -72,7 +94,7 @@ class Parser:
             return self.definition_statement()
         if token.type is TokenType.BEGIN_INT:
             return self.interrupt()
-        raise SyntaxError(f'Unexpected token: {token}')
+        raise UnexpectedTokenError(token.type)
 
     def interrupt(self) -> AstInterrupt:
         self.compare_and_next(TokenType.BEGIN_INT)
@@ -110,7 +132,7 @@ class Parser:
         self.compare_and_next(TokenType.SYMBOL)
 
         if name in self.definitions or name in self.symbol_table:
-            raise SyntaxError(f'Name >{name}< is already in use')
+            raise NameIsAlreadyInUseError(name)
 
         self.symbol_table.append(name)
 
@@ -124,7 +146,7 @@ class Parser:
             return self.if_statement()
         if token.type is TokenType.BEGIN:
             return self.loop_statement()
-        raise SyntaxError(f'Unexpected token: {token}')
+        raise UnexpectedTokenError(token.type)
 
     def definition_statement(self):
         self.compare_and_next(TokenType.COLON)
@@ -133,7 +155,7 @@ class Parser:
         self.compare_and_next(TokenType.SYMBOL)
 
         if name in self.symbol_table:
-            raise SyntaxError(f'Name >{name}< is already in use')
+            raise NameIsAlreadyInUseError(name)
 
         children = []
         while self.current_token.type in statement_body_start_tokens:
@@ -150,7 +172,7 @@ class Parser:
         if token.type in operation_start_tokens:
             self.compare_and_next(token.type)
             return AstOperation(token.type)
-        raise SyntaxError(f'Unexpected token: {token}')
+        raise UnexpectedTokenError(token.type)
 
     def literal(self) -> AstLiteral:
         self.compare_and_next(TokenType.PRINT_STR_BEGIN)

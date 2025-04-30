@@ -2,36 +2,36 @@ from enum import Enum
 
 
 class TokenType(str, Enum):
-    NUMBER = 'NUMBER'
-    SYMBOL = 'SYMBOL'
-    LITERAL = 'LITERAL'
-    BEGIN_INT = 'begin_int'
-    END_INT = 'end_int'
-    PLUS = '+'
-    MINUS = '-'
-    MUL = '*'
-    DIV = '/'
-    DUP = 'dup'
-    DROP = 'drop'
-    SWAP = 'swap'
-    EQUALS = '='
-    NOT_EQUALS = '!='
-    GREATER = '>'
-    GREATER_EQUAL = '>='
-    LESS = '<'
-    LESS_EQUAL = '<='
-    PRINT = '.'
-    READ = ','
+    NUMBER = "NUMBER"
+    SYMBOL = "SYMBOL"
+    LITERAL = "LITERAL"
+    BEGIN_INT = "begin_int"
+    END_INT = "end_int"
+    PLUS = "+"
+    MINUS = "-"
+    MUL = "*"
+    DIV = "/"
+    DUP = "dup"
+    DROP = "drop"
+    SWAP = "swap"
+    EQUALS = "="
+    NOT_EQUALS = "!="
+    GREATER = ">"
+    GREATER_EQUAL = ">="
+    LESS = "<"
+    LESS_EQUAL = "<="
+    PRINT = "."
+    READ = ","
     PRINT_STR_BEGIN = '."'
     PRINT_STR_END = '"'
-    STORE = '!'
-    LOAD = '@'
-    IF = 'if'
-    THEN = 'then'
-    ELSE = 'else'
-    BEGIN = 'begin'
-    UNTIL = 'until'
-    COLON = ':'
-    SEMICOLON = ';'
-    VAR = 'var'
-    EOF = 'EOF'
+    STORE = "!"
+    LOAD = "@"
+    IF = "if"
+    THEN = "then"
+    ELSE = "else"
+    BEGIN = "begin"
+    UNTIL = "until"
+    COLON = ":"
+    SEMICOLON = ";"
+    VAR = "var"
+    EOF = "EOF"

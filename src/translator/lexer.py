@@ -5,18 +5,20 @@ from src.translator.token.token_type import TokenType
 def is_simple_token_type(value: str) -> bool:
     try:
         token = TokenType(value)
-        excluded = {TokenType.NUMBER, TokenType.SYMBOL, TokenType.EOF}
-        return token not in excluded
     except ValueError:
         return False
+    else:
+        excluded = {TokenType.NUMBER, TokenType.SYMBOL, TokenType.EOF}
+        return token not in excluded
 
 
 def is_number(value: str) -> bool:
     try:
         int(value)
-        return True
     except ValueError:
         return False
+    else:
+        return True
 
 
 class Lexer:
@@ -40,14 +42,14 @@ class Lexer:
             self.next_char()
 
     def parse_word(self):
-        result = ''
+        result = ""
         while self.current_char is not None and not self.current_char.isspace():
             result += self.current_char
             self.next_char()
         return result
 
     def parse_literal(self):
-        literal = ''
+        literal = ""
         while self.current_char is not None and self.current_char != '"':
             literal += self.current_char
             self.next_char()
@@ -55,7 +57,6 @@ class Lexer:
 
     def get_next_token(self):
         while self.current_char is not None:
-
             if self.literal_mode:
                 value = self.parse_literal()
                 self.literal_mode = False
@@ -78,4 +79,4 @@ class Lexer:
 
             return Token(TokenType.SYMBOL, word)
 
-        return Token(TokenType.EOF, 'eof')
+        return Token(TokenType.EOF, "eof")

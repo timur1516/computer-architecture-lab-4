@@ -1,17 +1,17 @@
+from __future__ import annotations
+
 import json
-from typing import List
 
 from src.isa.instructions.instruction import Instruction
 from src.isa.memory_config import DATA_AREA_START_ADDR
-from src.isa.opcode import binary_to_opcode
+from src.isa.opcode_ import binary_to_opcode
 from src.isa.opcode_to_instruction_map import opcode_to_instruction_type
-from src.isa.util.binary import int_to_bin_word, bytes_to_int_array, extract_bits
+from src.isa.util.binary import bytes_to_int_array, extract_bits, int_to_bin_word
 
 
-def to_bytes(code: List[Instruction],
-             data: List[int],
-             is_interrupts_enabled: bool,
-             interrupt_handler_address: int) -> bytes:
+def to_bytes(
+    code: list[Instruction], data: list[int], is_interrupts_enabled: bool, interrupt_handler_address: int
+) -> bytes:
     binary_code = bytearray()
 
     binary_code.extend(int_to_bin_word(int(is_interrupts_enabled)))
@@ -40,36 +40,36 @@ def to_hex(binary_code: bytes) -> str:
 
     is_interrupts_enabled = bool(word_list[0])
 
-    result.append(f'is interrupts enabled: {is_interrupts_enabled}')
+    result.append(f"is interrupts enabled: {is_interrupts_enabled}")
 
     interrupt_handler_address = word_list[1]
 
-    result.append(f'interrupt handler address: {interrupt_handler_address}')
+    result.append(f"interrupt handler address: {interrupt_handler_address}")
 
     data_len = word_list[2]
 
-    result.append(f'data')
+    result.append("data")
 
-    for word in word_list[3:data_len + 3]:
-        hex_word = f'{word:08X}'
-        bin_word = f'{word:032b}'
-        line = f'{data_address:3} - {hex_word} - {bin_word}'
+    for word in word_list[3 : data_len + 3]:
+        hex_word = f"{word:08X}"
+        bin_word = f"{word:032b}"
+        line = f"{data_address:3} - {hex_word} - {bin_word}"
 
         result.append(line)
         data_address += 1
 
-    result.append(f'instructions')
+    result.append("instructions")
 
-    for word in word_list[data_len + 3:]:
+    for word in word_list[data_len + 3 :]:
         opcode_bin = extract_bits(word, 7)
         opcode = binary_to_opcode[opcode_bin]
 
         instruction_type = opcode_to_instruction_type[opcode]
         instruction = instruction_type.from_binary(word)
 
-        hex_word = f'{word:08X}'
-        bin_word = f'{word:032b}'
-        line = f'{instruction_address:3} - {hex_word} - {bin_word} - {str(instruction)}'
+        hex_word = f"{word:08X}"
+        bin_word = f"{word:032b}"
+        line = f"{instruction_address:3} - {hex_word} - {bin_word} - {instruction!s}"
 
         result.append(line)
         instruction_address += 1
@@ -77,7 +77,7 @@ def to_hex(binary_code: bytes) -> str:
     return "\n".join(result)
 
 
-def from_bytes(binary_code) -> (List[Instruction], List[int], int, bool):
+def from_bytes(binary_code) -> (list[Instruction], list[int], int, bool):
     instructions = []
     data = []
 
@@ -89,10 +89,10 @@ def from_bytes(binary_code) -> (List[Instruction], List[int], int, bool):
 
     data_len = word_list[2]
 
-    for word in word_list[3:data_len + 3]:
+    for word in word_list[3 : data_len + 3]:
         data.append(word)
 
-    for word in word_list[data_len + 3:]:
+    for word in word_list[data_len + 3 :]:
         opcode_bin = extract_bits(word, 7)
         opcode = binary_to_opcode[opcode_bin]
 
@@ -104,11 +104,13 @@ def from_bytes(binary_code) -> (List[Instruction], List[int], int, bool):
     return instructions, data, interrupt_handler_address, is_interrupts_enabled
 
 
-def write_json(filename: str,
-               code: List[Instruction],
-               data_memory: List[int],
-               is_interrupts_enabled: bool,
-               interrupt_handler_address: int):
+def write_json(
+    filename: str,
+    code: list[Instruction],
+    data_memory: list[int],
+    is_interrupts_enabled: bool,
+    interrupt_handler_address: int,
+):
     data_address = DATA_AREA_START_ADDR
     instruction_address = 0
     data_buf = []
@@ -124,7 +126,7 @@ def write_json(filename: str,
 
     with open(filename, "w", encoding="utf-8") as file:
         file.write(
-            f'''{{
+            f"""{{
     "is_interrupts_enabled": {str.lower(str(is_interrupts_enabled))},
     "interrupt_handler_address": {interrupt_handler_address},
     "data": [
@@ -133,4 +135,5 @@ def write_json(filename: str,
     "instructions": [
         {",\n\t\t".join(instructions_buf)}
     ]
-}}''')
+}}"""
+        )

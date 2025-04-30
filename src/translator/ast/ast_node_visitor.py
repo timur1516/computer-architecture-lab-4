@@ -1,9 +1,20 @@
-from src.translator.ast.__ast import AstBlock, AstNumber, AstOperation, AstSymbol, AstIfStatement, AstWhileStatement, \
-    AstVariableDeclaration, AstDefinition, Ast, AstLiteral, AstInterrupt
+from src.translator.ast.__ast import (
+    Ast,
+    AstBlock,
+    AstDefinition,
+    AstIfStatement,
+    AstInterrupt,
+    AstLiteral,
+    AstNumber,
+    AstOperation,
+    AstSymbol,
+    AstVariableDeclaration,
+    AstWhileStatement,
+)
 
 
 class AstNodeVisitor:
-    def visit(self, node: Ast):
+    def visit(self, node: Ast):  # noqa: C901 # сделано ради простоты и прозрачности
         if isinstance(node, AstOperation):
             return self.visit_operation(node)
         if isinstance(node, AstNumber):
@@ -24,6 +35,7 @@ class AstNodeVisitor:
             return self.visit_variable_declaration(node)
         if isinstance(node, AstDefinition):
             return self.visit_definition(node)
+        raise RuntimeError(f"Unsupported node type: {type(node)}")  # noqa: TRY003 # нет смысла в пользовательском исключении
 
     def visit_operation(self, node: AstOperation):
         pass

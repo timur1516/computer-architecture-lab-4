@@ -6,16 +6,13 @@ from src.isa.instructions.jr_instruction import JRInstruction
 from src.isa.instructions.r_instruction import RInstruction
 from src.isa.instructions.s_instruction import SInstruction
 from src.isa.instructions.u_instruction import UInstruction
-from src.isa.opcode import Opcode
+from src.isa.opcode_ import Opcode
 
 opcode_to_instruction_type = {
     Opcode.LUI: UInstruction,
-
     Opcode.SW: SInstruction,
-
     Opcode.LW: IInstruction,
     Opcode.ADDI: IInstruction,
-
     Opcode.ADD: RInstruction,
     Opcode.SUB: RInstruction,
     Opcode.MUL: RInstruction,
@@ -25,16 +22,12 @@ opcode_to_instruction_type = {
     Opcode.SRL: RInstruction,
     Opcode.AND: RInstruction,
     Opcode.XOR: RInstruction,
-
     Opcode.BEQ: BInstruction,
     Opcode.BNE: BInstruction,
     Opcode.BGT: BInstruction,
     Opcode.BLT: BInstruction,
-
     Opcode.J: JInstruction,
-
     Opcode.JR: JRInstruction,
-
     Opcode.HALT: Instruction,
-    Opcode.RINT: Instruction
+    Opcode.RINT: Instruction,
 }

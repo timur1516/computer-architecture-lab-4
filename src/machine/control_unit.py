@@ -1,5 +1,7 @@
+from __future__ import annotations
+
+import logging
 from enum import Enum
-from typing import List
 
 from src.isa.instructions.b_instruction import BInstruction
 from src.isa.instructions.i_instruction import IInstruction
@@ -9,16 +11,16 @@ from src.isa.instructions.jr_instruction import JRInstruction
 from src.isa.instructions.r_instruction import RInstruction
 from src.isa.instructions.s_instruction import SInstruction
 from src.isa.instructions.u_instruction import UInstruction
-from src.isa.opcode import Opcode
+from src.isa.opcode_ import Opcode
 from src.isa.register import Register
 from src.machine.data_path import DataPath
 
 
 class ProcessorState(str, Enum):
-    NORMAL = 'NORMAL'
-    INT_ENTER = 'INT_ENTER'
-    INT_BODY = 'INT_BODY'
-    INT_EXIT = 'INT_EXIT'
+    NORMAL = "NORMAL"
+    INT_ENTER = "INT_ENTER"
+    INT_BODY = "INT_BODY"
+    INT_EXIT = "INT_EXIT"
 
     def __str__(self):
         return self.value
@@ -47,13 +49,14 @@ class ControlUnit:
 
     is_interrupts_enabled = None
 
-    def __init__(self,
-                 instruction_memory: List[Instruction],
-                 data_path: DataPath,
-                 input_timetable: List[tuple[int, chr]],
-                 is_interrupts_enabled: bool,
-                 interrupt_handler_address: int):
-
+    def __init__(
+        self,
+        instruction_memory: list[Instruction],
+        data_path: DataPath,
+        input_timetable: list[tuple[int, chr]],
+        is_interrupts_enabled: bool,
+        interrupt_handler_address: int,
+    ):
         self.instruction_memory = instruction_memory
         self.data_path = data_path
         self.is_interrupts_enabled = is_interrupts_enabled
@@ -76,8 +79,9 @@ class ControlUnit:
     def _signal_latch_pc(self, next_pc: int):
         self.program_counter = next_pc
 
-        assert self.program_counter < len(
-            self.instruction_memory), 'out of instruction memory: {}'.format(self.program_counter)
+        assert self.program_counter < len(self.instruction_memory), "out of instruction memory: {}".format(
+            self.program_counter
+        )
 
     def signal_latch_pc_seq(self):
         next_pc = self.program_counter + 1
@@ -102,14 +106,14 @@ class ControlUnit:
     def signal_latch_pc_interrupt_buffer(self):
         self.pc_interrupt_buffer = self.program_counter
 
-    def process_next_tick(self):
+    def process_next_tick(self):  # noqa: C901 # код хорошо структурирован, по этому не проблема.
         if self._tick in self.input_timetable:
             symbol = self.input_timetable[self._tick]
-            print(f'Interrupt request on tick {self._tick} with symbol "{symbol}"')
+            logging.debug('Interrupt request on tick %s with symbol "%s"', self._tick, symbol)
             if not self.is_interrupts_enabled:
-                print('Interrupts are disabled')
+                logging.debug("Interrupts are disabled")
             elif self.state in [ProcessorState.INT_ENTER, ProcessorState.INT_BODY]:
-                print('Interrupts inside of interrupts are not supported')
+                logging.debug("Interrupts inside of interrupts are not supported")
             else:
                 self.is_interrupt_request = True
                 self.data_path.input_buffer = symbol
@@ -174,7 +178,6 @@ class ControlUnit:
                     return
 
         if isinstance(instr, IInstruction):
-
             if instr.opcode is Opcode.ADDI:
                 self.data_path.signal_perform_alu_operation_imm(instr.imm, instr.rs1, instr.rd, Opcode.ADD)
                 self.signal_latch_pc_seq()
@@ -204,7 +207,6 @@ class ControlUnit:
             return
 
         if isinstance(instr, BInstruction):
-
             if instr.opcode is Opcode.BEQ:
                 if self.step == 0:
                     self.data_path.signal_perform_alu_operation_reg(instr.rs1, instr.rs2, Register.ZERO, Opcode.SUB)

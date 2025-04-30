@@ -2,12 +2,12 @@ from enum import Enum
 
 
 class Register(Enum):
-    T0 = 't0'
-    T1 = 't1'
-    T2 = 't2'
-    T3 = 't3'
-    SP = 'sp'
-    ZERO = 'zero'
+    T0 = "t0"
+    T1 = "t1"
+    T2 = "t2"
+    T3 = "t3"
+    SP = "sp"
+    ZERO = "zero"
 
     def __str__(self) -> str:
         return self.value

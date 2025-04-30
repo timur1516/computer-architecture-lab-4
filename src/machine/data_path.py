@@ -1,9 +1,16 @@
-from typing import List
+from __future__ import annotations
+
+import logging
 
 from src.constants import MAX_NUMBER, MIN_NUMBER
-from src.isa.memory_config import INPUT_ADDRESS, OUTPUT_ADDRESS, DATA_AREA_START_ADDR
-from src.isa.opcode import Opcode
+from src.isa.memory_config import DATA_AREA_START_ADDR, INPUT_ADDRESS, OUTPUT_ADDRESS
+from src.isa.opcode_ import Opcode
 from src.isa.register import Register
+from src.machine.exceptions.exceptions import (
+    EmptyInputBufferError,
+    ReadingFromOutputAddressError,
+    WritingToInputAddressError,
+)
 
 ALU_OPCODE_OPERATORS = {
     Opcode.ADD: lambda left, right: left + right,
@@ -15,7 +22,7 @@ ALU_OPCODE_OPERATORS = {
     Opcode.SRL: lambda left, right: left >> right,
     Opcode.AND: lambda left, right: left & right,
     Opcode.OR: lambda left, right: left | right,
-    Opcode.XOR: lambda left, right: left ^ right
+    Opcode.XOR: lambda left, right: left ^ right,
 }
 
 
@@ -30,9 +37,9 @@ class DataPath:
 
     output_buffer = None
 
-    registers_file = {r: None for r in Register}
+    registers_file: dict[Register, int]
 
-    shadow_register_file = {r: None for r in Register if r is not Register.ZERO}
+    shadow_register_file: dict[Register, int]
 
     zero_flag = None
 
@@ -42,16 +49,14 @@ class DataPath:
 
     carry_flag = None
 
-    def __init__(self, data_memory_size: int, init_data_memory: List[int]) -> None:
+    def __init__(self, data_memory_size: int, init_data_memory: list[int]) -> None:
         self.data_memory_size = data_memory_size
         self.data_memory = (
-                [0] * DATA_AREA_START_ADDR +
-                init_data_memory +
-                [0] * (data_memory_size - len(init_data_memory))
+            [0] * DATA_AREA_START_ADDR + init_data_memory + [0] * (data_memory_size - len(init_data_memory))
         )
         self.data_address = 0
 
-        self.input_buffer = ''
+        self.input_buffer = ""
         self.output_buffer = []
 
         self.registers_file = {r: 0 for r in Register}
@@ -66,7 +71,7 @@ class DataPath:
     def signal_latch_data_address(self, rs1: Register):
         self.data_address = self.registers_file[rs1]
 
-        assert 0 <= self.data_address < self.data_memory_size, 'out of memory: {}'.format(self.data_address)
+        assert 0 <= self.data_address < self.data_memory_size, "out of memory: {}".format(self.data_address)
 
     def signal_store_registers(self):
         self.shadow_register_file = {r: self.registers_file[r] for r in Register if r is not Register.ZERO}
@@ -76,20 +81,22 @@ class DataPath:
 
     def signal_data_memory_store(self, rs2: Register):
         if self.data_address == INPUT_ADDRESS:
-            raise RuntimeError('Writing to INPUT_ADDRESS is forbidden')
+            raise WritingToInputAddressError()
         if self.data_address == OUTPUT_ADDRESS:
             symbol = chr(self.registers_file[rs2])
+            logging.debug("output: %s << %s", repr("".join(self.output_buffer)), repr(symbol))
             self.output_buffer.append(symbol)
         else:
             self.data_memory[self.data_address] = self.registers_file[rs2]
 
     def signal_data_memory_load(self, rd: Register):
         if self.data_address == OUTPUT_ADDRESS:
-            raise RuntimeError('Reading from OUTPUT_ADDRESS is forbidden')
+            raise ReadingFromOutputAddressError()
         if self.data_address == INPUT_ADDRESS:
-            if self.input_buffer == '':
-                raise EOFError()
+            if self.input_buffer == "":
+                raise EmptyInputBufferError()
             value = ord(self.input_buffer)
+            logging.debug("input: %s", repr(value))
 
         else:
             value = self.data_memory[self.data_address]
@@ -110,19 +117,17 @@ class DataPath:
         self._write_to_reg(rd, old_pc)
 
     def signal_next_pc_imm(self, pc: int, imm: int) -> int:
-        next_pc = self._perform_alu_operation(imm, pc, Opcode.ADD)
-        return next_pc
+        return self._perform_alu_operation(imm, pc, Opcode.ADD)
 
     def signal_next_pc_reg(self, imm: int, rs2: Register) -> int:
-        next_pc = self._perform_alu_operation(imm, self.registers_file[rs2], Opcode.ADD)
-        return next_pc
+        return self._perform_alu_operation(imm, self.registers_file[rs2], Opcode.ADD)
 
     def _write_to_reg(self, rd: Register, value: int):
         if rd is not Register.ZERO:
             self.registers_file[rd] = value
 
     def _perform_alu_operation(self, op1: int, op2: int, opcode: Opcode) -> int:
-        assert opcode in ALU_OPCODE_OPERATORS, 'unknown alu opcode: {}'.format(opcode)
+        assert opcode in ALU_OPCODE_OPERATORS, "unknown alu opcode: {}".format(opcode)
 
         result_val = ALU_OPCODE_OPERATORS[opcode](op1, op2)
 
