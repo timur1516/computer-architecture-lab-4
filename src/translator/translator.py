@@ -243,7 +243,6 @@ class Translator(AstNodeVisitor):
         ]
 
     def visit_block(self, node: AstBlock) -> list[Instruction]:
-
         result = []
 
         for block in node.children:
@@ -294,10 +293,10 @@ class Translator(AstNodeVisitor):
         ]
 
         return (
-                branch_logic_instructions
-                + if_block_instructions
-                + [JInstruction(Opcode.J, len(else_block_instructions) + 1)]
-                + else_block_instructions
+            branch_logic_instructions
+            + if_block_instructions
+            + [JInstruction(Opcode.J, len(else_block_instructions) + 1)]
+            + else_block_instructions
         )
 
     def visit_while_statement(self, node: AstWhileStatement) -> list[Instruction]:
