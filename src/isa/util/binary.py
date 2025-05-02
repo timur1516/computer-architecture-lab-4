@@ -17,6 +17,16 @@ def is_correct_bin_size_signed(binary: int, n: int) -> bool:
     return -(1 << (n - 1)) <= binary < 1 << (n - 1)
 
 
+def is_correct_bin_size_unsigned(binary: int, n: int) -> bool:
+    return 0 <= binary < 1 << n
+
+
+def is_correct_bin_size(binary: int, n: int) -> bool:
+    if binary < 0:
+        return is_correct_bin_size_signed(binary, n)
+    return is_correct_bin_size_unsigned(binary, n)
+
+
 def int_to_bin_word(binary: int) -> tuple[int, int, int, int]:
     return (binary >> 24) & 0xFF, (binary >> 16) & 0xFF, (binary >> 8) & 0xFF, binary & 0xFF
 

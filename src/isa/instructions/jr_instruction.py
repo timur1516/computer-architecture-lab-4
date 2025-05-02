@@ -9,7 +9,7 @@ class JRInstruction(Instruction):
     imm = None
 
     def __init__(self, opcode: Opcode, imm: int, rs1: Register):
-        assert is_correct_bin_size_signed(imm, 20), "imm size in JInstruction with rs1 must be 20 bits"
+        assert is_correct_bin_size_signed(imm, 20), "imm size in JRInstruction must be 20 bits"
 
         super().__init__(opcode)
         self.rs1 = rs1

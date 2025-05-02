@@ -2,11 +2,15 @@ from src.translator.ast.__ast import (
     Ast,
     AstBlock,
     AstDefinition,
+    AstDVariableDeclaration,
+    AstExtendedNumber,
     AstIfStatement,
     AstInterrupt,
     AstLiteral,
+    AstMemoryBlockDeclaration,
     AstNumber,
     AstOperation,
+    AstStringDeclaration,
     AstSymbol,
     AstVariableDeclaration,
     AstWhileStatement,
@@ -19,6 +23,8 @@ class AstNodeVisitor:
             return self.visit_operation(node)
         if isinstance(node, AstNumber):
             return self.visit_number(node)
+        if isinstance(node, AstExtendedNumber):
+            return self.visit_extended_number(node)
         if isinstance(node, AstBlock):
             return self.visit_block(node)
         if isinstance(node, AstInterrupt):
@@ -33,6 +39,12 @@ class AstNodeVisitor:
             return self.visit_while_statement(node)
         if isinstance(node, AstVariableDeclaration):
             return self.visit_variable_declaration(node)
+        if isinstance(node, AstDVariableDeclaration):
+            return self.visit_d_variable_declaration(node)
+        if isinstance(node, AstStringDeclaration):
+            return self.visit_string_declaration(node)
+        if isinstance(node, AstMemoryBlockDeclaration):
+            return self.visit_memory_block_declaration(node)
         if isinstance(node, AstDefinition):
             return self.visit_definition(node)
         raise RuntimeError(f"Unsupported node type: {type(node)}")  # noqa: TRY003 # нет смысла в пользовательском исключении
@@ -41,6 +53,9 @@ class AstNodeVisitor:
         pass
 
     def visit_number(self, node: AstNumber):
+        pass
+
+    def visit_extended_number(self, node: AstExtendedNumber):
         pass
 
     def visit_block(self, node: AstBlock):
@@ -62,6 +77,15 @@ class AstNodeVisitor:
         pass
 
     def visit_variable_declaration(self, node: AstVariableDeclaration):
+        pass
+
+    def visit_d_variable_declaration(self, node: AstDVariableDeclaration):
+        pass
+
+    def visit_string_declaration(self, node: AstStringDeclaration):
+        pass
+
+    def visit_memory_block_declaration(self, node: AstMemoryBlockDeclaration):
         pass
 
     def visit_definition(self, node: AstDefinition):

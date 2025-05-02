@@ -7,7 +7,7 @@ class JInstruction(Instruction):
     imm = None
 
     def __init__(self, opcode: Opcode, imm: int):
-        assert is_correct_bin_size_signed(imm, 25), "imm size in JInstruction without rs1 must be 25 bits"
+        assert is_correct_bin_size_signed(imm, 25), "imm size in JInstruction must be 25 bits"
 
         super().__init__(opcode)
         self.imm = imm

@@ -37,6 +37,7 @@ def simulation(
     if control_unit.get_tick() >= limit:
         logging.warning("Limit exceeded!")
     logging.info("output_buffer: %s", repr("".join(data_path.output_buffer)))
+
     return "".join(data_path.output_buffer)
 
 
@@ -58,8 +59,8 @@ def main(code_file: str, input_file: str):
         data_memory,
         interrupt_handler_address,
         is_interrupts_enabled,
-        data_memory_size=100,
-        limit=2000,
+        data_memory_size=1000,
+        limit=10000,
     )
 
     print("".join(output))

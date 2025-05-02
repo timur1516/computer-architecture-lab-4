@@ -10,7 +10,7 @@ class IInstruction(Instruction):
     imm = None
 
     def __init__(self, opcode: Opcode, rd: Register, rs1: Register, imm: int):
-        assert is_correct_bin_size_signed(imm, 12), "imm size in IInstruction must be 12 bits"
+        assert is_correct_bin_size_signed(imm, 15), "imm size in IInstruction must be 15 bits"
 
         super().__init__(opcode)
         self.rd = rd
@@ -36,7 +36,7 @@ class IInstruction(Instruction):
         rs1_bin = extract_bits(binary >> 12, 5)
         rs1 = binary_to_register[rs1_bin]
 
-        imm = binary_to_signed_int(binary >> 17, 12)
+        imm = binary_to_signed_int(binary >> 17, 15)
 
         return IInstruction(opcode, rd, rs1, imm)
 

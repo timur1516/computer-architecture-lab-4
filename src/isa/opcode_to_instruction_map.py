@@ -14,8 +14,10 @@ opcode_to_instruction_type = {
     Opcode.LW: IInstruction,
     Opcode.ADDI: IInstruction,
     Opcode.ADD: RInstruction,
+    Opcode.ADC: RInstruction,
     Opcode.SUB: RInstruction,
     Opcode.MUL: RInstruction,
+    Opcode.MULH: RInstruction,
     Opcode.DIV: RInstruction,
     Opcode.REM: RInstruction,
     Opcode.SLL: RInstruction,
@@ -30,4 +32,6 @@ opcode_to_instruction_type = {
     Opcode.JR: JRInstruction,
     Opcode.HALT: Instruction,
     Opcode.RINT: Instruction,
+    Opcode.EINT: Instruction,
+    Opcode.DINT: Instruction,
 }

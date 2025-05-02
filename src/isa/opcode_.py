@@ -10,8 +10,10 @@ class Opcode(Enum):
     ADDI = "addi"
 
     ADD = "add"
+    ADC = "adc"
     SUB = "sub"
     MUL = "mul"
+    MULH = "mulh"
     DIV = "div"
     REM = "rem"
     SLL = "sll"
@@ -30,6 +32,8 @@ class Opcode(Enum):
 
     HALT = "halt"
     RINT = "rint"
+    EINT = "eint"
+    DINT = "dint"
 
     def __str__(self) -> str:
         return self.value

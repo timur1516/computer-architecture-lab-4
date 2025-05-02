@@ -4,11 +4,15 @@ from src.translator.ast.__ast import (
     Ast,
     AstBlock,
     AstDefinition,
+    AstDVariableDeclaration,
+    AstExtendedNumber,
     AstIfStatement,
     AstInterrupt,
     AstLiteral,
+    AstMemoryBlockDeclaration,
     AstNumber,
     AstOperation,
+    AstStringDeclaration,
     AstSymbol,
     AstVariableDeclaration,
     AstWhileStatement,
@@ -16,6 +20,7 @@ from src.translator.ast.__ast import (
 from src.translator.exceptions.exceptions import NameIsAlreadyInUseError, UndefinedSymbolError, UnexpectedTokenError
 from src.translator.lexer import Lexer
 from src.translator.token.grammar_start_tokens import (
+    declaration_start_tokens,
     operation_start_tokens,
     statement_body_start_tokens,
     statement_start_tokens,
@@ -29,7 +34,7 @@ class Parser:
     def __init__(self, lexer: Lexer):
         self.lexer = lexer
         self.current_token = lexer.get_next_token()
-        self.symbol_table = []
+        self.symbol_table = {}
         self.definitions = {}
         self.literals = []
 
@@ -59,10 +64,12 @@ class Parser:
             return self.statement()
         raise UnexpectedTokenError(token.type)
 
-    def word(self) -> AstNumber | AstSymbol | AstOperation:
+    def word(self) -> AstNumber | AstExtendedNumber | AstSymbol | AstOperation:
         token = self.current_token
         if token.type is TokenType.NUMBER:
             return self.number()
+        if token.type is TokenType.EXTENDED_NUMBER:
+            return self.extended_number()
         if token.type is TokenType.SYMBOL:
             return self.symbol()
         if token.type in operation_start_tokens:
@@ -73,6 +80,11 @@ class Parser:
         token = self.current_token
         self.compare_and_next(TokenType.NUMBER)
         return AstNumber(int(token.value))
+
+    def extended_number(self) -> AstExtendedNumber:
+        token = self.current_token
+        self.compare_and_next(TokenType.EXTENDED_NUMBER)
+        return AstExtendedNumber(int(token.value))
 
     def symbol(self) -> AstSymbol:
         word = self.current_token.value
@@ -86,9 +98,19 @@ class Parser:
 
     def statement(
         self,
-    ) -> AstIfStatement | AstWhileStatement | AstVariableDeclaration | AstDefinition | AstInterrupt | None:
+    ) -> (
+        AstIfStatement
+        | AstWhileStatement
+        | AstVariableDeclaration
+        | AstDVariableDeclaration
+        | AstStringDeclaration
+        | AstMemoryBlockDeclaration
+        | AstDefinition
+        | AstInterrupt
+        | None
+    ):
         token = self.current_token
-        if token.type == TokenType.VAR:
+        if token.type in declaration_start_tokens:
             return self.declaration_statement()
         if token.type == TokenType.COLON:
             return self.definition_statement()
@@ -125,18 +147,76 @@ class Parser:
         self.compare_and_next(TokenType.UNTIL)
         return AstWhileStatement(while_block)
 
-    def declaration_statement(self) -> AstVariableDeclaration:
+    def declaration_statement(
+        self,
+    ) -> AstVariableDeclaration | AstDVariableDeclaration | AstStringDeclaration | AstMemoryBlockDeclaration:
+        token = self.current_token
+        if token.type in TokenType.VAR:
+            return self.variable_declaration()
+        if token.type == TokenType.D_VAR:
+            return self.d_variable_declaration()
+        if token.type == TokenType.STR:
+            return self.string_declaration()
+        if token.type == TokenType.ALLOC:
+            return self.memory_block_declaration()
+        raise UnexpectedTokenError(token.type)
+
+    def variable_declaration(self) -> AstVariableDeclaration:
         self.compare_and_next(TokenType.VAR)
 
         name = self.current_token.value
         self.compare_and_next(TokenType.SYMBOL)
-
         if name in self.definitions or name in self.symbol_table:
             raise NameIsAlreadyInUseError(name)
-
-        self.symbol_table.append(name)
+        self.symbol_table[name] = -1
 
         return AstVariableDeclaration(name)
+
+    def d_variable_declaration(self) -> AstDVariableDeclaration:
+        self.compare_and_next(TokenType.VAR)
+
+        name = self.current_token.value
+        self.compare_and_next(TokenType.SYMBOL)
+        if name in self.definitions or name in self.symbol_table:
+            raise NameIsAlreadyInUseError(name)
+        self.symbol_table[name] = -1
+
+        return AstDVariableDeclaration(name)
+
+    def string_declaration(self) -> AstStringDeclaration:
+        self.compare_and_next(TokenType.STR)
+
+        name = self.current_token.value
+        self.compare_and_next(TokenType.SYMBOL)
+        if name in self.definitions or name in self.symbol_table:
+            raise NameIsAlreadyInUseError(name)
+        self.symbol_table[name] = -1
+
+        literal = self.literal()
+
+        return AstStringDeclaration(name, literal)
+
+    def literal(self) -> AstLiteral:
+        self.compare_and_next(TokenType.STR_LITERAL_SEP)
+        value = self.current_token.value
+        self.compare_and_next(TokenType.LITERAL)
+        self.compare_and_next(TokenType.STR_LITERAL_SEP)
+        self.literals.append(value)
+        return AstLiteral(len(self.literals) - 1)
+
+    def memory_block_declaration(self) -> AstMemoryBlockDeclaration:
+        self.compare_and_next(TokenType.ALLOC)
+
+        name = self.current_token.value
+        self.compare_and_next(TokenType.SYMBOL)
+        if name in self.definitions or name in self.symbol_table:
+            raise NameIsAlreadyInUseError(name)
+        self.symbol_table[name] = -1
+
+        size = int(self.current_token.value)
+        self.compare_and_next(TokenType.NUMBER)
+
+        return AstMemoryBlockDeclaration(name, size)
 
     def definition_body(self) -> AstBlock | AstIfStatement | AstWhileStatement:
         token = self.current_token
@@ -167,17 +247,7 @@ class Parser:
 
     def operation(self) -> AstOperation | AstLiteral:
         token = self.current_token
-        if token.type is TokenType.PRINT_STR_BEGIN:
-            return self.literal()
         if token.type in operation_start_tokens:
             self.compare_and_next(token.type)
             return AstOperation(token.type)
         raise UnexpectedTokenError(token.type)
-
-    def literal(self) -> AstLiteral:
-        self.compare_and_next(TokenType.PRINT_STR_BEGIN)
-        value = self.current_token.value
-        self.compare_and_next(TokenType.LITERAL)
-        self.compare_and_next(TokenType.PRINT_STR_END)
-        self.literals.append(value)
-        return AstLiteral(len(self.literals) - 1)

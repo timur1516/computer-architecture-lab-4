@@ -154,6 +154,20 @@ class ControlUnit:
             self.state = ProcessorState.INT_EXIT
             return
 
+        if instr.opcode is Opcode.EINT:
+            self.is_interrupts_enabled = True
+            self.signal_latch_pc_seq()
+            self.step = 0
+            self.tick()
+            return
+
+        if instr.opcode is Opcode.DINT:
+            self.is_interrupts_enabled = False
+            self.signal_latch_pc_seq()
+            self.step = 0
+            self.tick()
+            return
+
         if isinstance(instr, UInstruction):
             if instr.opcode is Opcode.LUI:
                 self.data_path.signal_perform_alu_operation_u_imm(instr.u_imm, Register.ZERO, instr.rd, Opcode.ADD)

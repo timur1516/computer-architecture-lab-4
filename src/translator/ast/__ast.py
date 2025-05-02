@@ -17,6 +17,11 @@ class AstNumber(Ast):
         self.value = value
 
 
+class AstExtendedNumber(Ast):
+    def __init__(self, value: int):
+        self.value = value
+
+
 class AstSymbol(Ast):
     def __init__(self, name: str):
         self.name = name
@@ -40,6 +45,23 @@ class AstInterrupt(Ast):
 class AstVariableDeclaration(Ast):
     def __init__(self, name: str):
         self.name = name
+
+
+class AstDVariableDeclaration(Ast):
+    def __init__(self, name: str):
+        self.name = name
+
+
+class AstStringDeclaration(Ast):
+    def __init__(self, name: str, literal: AstLiteral):
+        self.name = name
+        self.literal = literal
+
+
+class AstMemoryBlockDeclaration(Ast):
+    def __init__(self, name: str, size: int):
+        self.name = name
+        self.size = size
 
 
 class AstDefinition(Ast):

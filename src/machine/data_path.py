@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import logging
 
-from src.constants import MAX_NUMBER, MIN_NUMBER
+from src.constants import MAX_NUMBER, MIN_NUMBER, WORD_SIZE
 from src.isa.memory_config import DATA_AREA_START_ADDR, INPUT_ADDRESS, OUTPUT_ADDRESS
 from src.isa.opcode_ import Opcode
 from src.isa.register import Register
+from src.isa.util.binary import binary_to_signed_int
 from src.machine.exceptions.exceptions import (
     EmptyInputBufferError,
     ReadingFromOutputAddressError,
@@ -14,8 +15,11 @@ from src.machine.exceptions.exceptions import (
 
 ALU_OPCODE_OPERATORS = {
     Opcode.ADD: lambda left, right: left + right,
+    Opcode.ADC: lambda left, right: (((left & ((1 << WORD_SIZE) - 1)) + (right & ((1 << WORD_SIZE) - 1))) >> WORD_SIZE)
+    & 1,
     Opcode.SUB: lambda left, right: left - right,
     Opcode.MUL: lambda left, right: left * right,
+    Opcode.MULH: lambda left, right: (left * right) >> WORD_SIZE,
     Opcode.DIV: lambda left, right: left // right,
     Opcode.REM: lambda left, right: left % right,
     Opcode.SLL: lambda left, right: left << right,
@@ -52,7 +56,9 @@ class DataPath:
     def __init__(self, data_memory_size: int, init_data_memory: list[int]) -> None:
         self.data_memory_size = data_memory_size
         self.data_memory = (
-            [0] * DATA_AREA_START_ADDR + init_data_memory + [0] * (data_memory_size - len(init_data_memory))
+            [0] * DATA_AREA_START_ADDR
+            + init_data_memory
+            + [0] * (data_memory_size - len(init_data_memory) - DATA_AREA_START_ADDR)
         )
         self.data_address = 0
 
@@ -134,12 +140,9 @@ class DataPath:
         self.zero_flag = result_val == 0
         self.negative_flag = result_val < 0
 
-        if result_val > MAX_NUMBER:
+        if not MIN_NUMBER <= result_val <= MAX_NUMBER:
             self.overflow_flag = True
-            result_val %= MAX_NUMBER
-        elif result_val < MIN_NUMBER:
-            self.overflow_flag = True
-            result_val %= abs(MIN_NUMBER)
+            result_val = binary_to_signed_int(result_val, WORD_SIZE)
         else:
             self.overflow_flag = False
 

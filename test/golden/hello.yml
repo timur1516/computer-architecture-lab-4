@@ -1,48 +1,87 @@
 in_source: |-
-  ." Hello World! "
+  str s " Hello World! "
+  : count
+    dup 1 + swap load
+  ;
+
+  : type
+    begin
+      swap
+      dup load print
+      1 + swap 1 - dup
+    until
+  ;
+
+  s count type
+
 in_stdin: |-
   <no input>
 out_code: !!binary |
   AAAAAAAAAAAAAAANAAAADAAAAEgAAABlAAAAbAAAAGwAAABvAAAAIAAAAFcAAABvAAAAcgAAAGwA
-  AABkAAAAIQAEYIQAABEDAAIQhAAAEgMAAmGEAAgwAv/+IQT/zC2QAAAAFQ==
+  AABkAAAAIQAEYIT//lKEAAJQAgAAUIP//lKEAAJQAgACYIT//lKEAAJQAgAAUIMAAlKEAABRAwAC
+  UoQAAiCF//5ShAACUAIAAFCDAAJShAAAUQMAAlKE//5ShAACUAL//lKEAARQAgAAUIMAAlKEAAAQ
+  g//+UoQAAlACAABQgwACUoQAAFEDAAJShP/+UoQAAlAC//5ShAAEUAIAAFCD//5ShAACUAIAAFCD
+  AAJShAAAEIP//lKEAAJQAgAAUIMAAlKEAAJhBAACIAIAAmCE//5ShAACUAIAAFCDAAJShAAAUQMA
+  AlKEAAIghf/+UoQAAlACAABQgwACUoQAAFEDAAJShP/+UoQAAlAC//5ShAAEUAIAAmCE//5ShAAC
+  UAIAAFCDAAJShAAAUQMAAlKEAAIgh//+UoQAAlACAABQg//+UoQAAlACAABQgwACUoT/jBWSAAAA
+  Fw==
 out_stdout: |
-  LITERAL: 0
-  []
-  ['Hello World!']
-  source LoC: 1 code instr: 9
+  STRING DECLARATION: s
+  	LITERAL: 0
+  END STRING DECLARATION
+  SYMBOL: s
+  OPERATION: TokenType.DUP
+  NUMBER: 1
+  OPERATION: TokenType.PLUS
+  OPERATION: TokenType.SWAP
+  OPERATION: TokenType.LOAD
+  WHILE STATEMENT
+  	OPERATION: TokenType.SWAP
+  	OPERATION: TokenType.DUP
+  	OPERATION: TokenType.LOAD
+  	OPERATION: TokenType.PRINT
+  	NUMBER: 1
+  	OPERATION: TokenType.PLUS
+  	OPERATION: TokenType.SWAP
+  	NUMBER: 1
+  	OPERATION: TokenType.MINUS
+  	OPERATION: TokenType.DUP
+  END WHILE STATEMENT
+  SYMBOL TABLE: {'s': -1}
+  LITERALS: ['Hello World!']
+  source LoC: 14 code instr: 84
   ============================================================
   Hello World!
 out_log: |-
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:   0 PC:   0/0 ADDR:   0 MEM_OUT:   0 T0:   0 T1:   0 T2:   0 T3:   0 SP: 100 	addi t0, zero, 2
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:   1 PC:   1/0 ADDR:   0 MEM_OUT:   0 T0:   2 T1:   0 T2:   0 T3:   0 SP: 100 	lw t1, t0, 0
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:   2 PC:   1/1 ADDR:   2 MEM_OUT:  12 T0:   2 T1:   0 T2:   0 T3:   0 SP: 100 	lw t1, t0, 0
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:   3 PC:   2/0 ADDR:   2 MEM_OUT:  12 T0:   2 T1:  12 T2:   0 T3:   0 SP: 100 	addi t0, t0, 1
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:   4 PC:   3/0 ADDR:   2 MEM_OUT:  12 T0:   3 T1:  12 T2:   0 T3:   0 SP: 100 	lw t3, t0, 0
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:   5 PC:   3/1 ADDR:   3 MEM_OUT:  72 T0:   3 T1:  12 T2:   0 T3:   0 SP: 100 	lw t3, t0, 0
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:   6 PC:   4/0 ADDR:   3 MEM_OUT:  72 T0:   3 T1:  12 T2:   0 T3:  72 SP: 100 	addi t2, zero, 1
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:   7 PC:   5/0 ADDR:   3 MEM_OUT:  72 T0:   3 T1:  12 T2:   1 T3:  72 SP: 100 	sw t3, t2
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:   8 PC:   5/1 ADDR:   1 MEM_OUT:   0 T0:   3 T1:  12 T2:   1 T3:  72 SP: 100 	sw t3, t2
-  DEBUG   data_path:signal_data_memory_store output: '' << 'H'
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:   9 PC:   6/0 ADDR:   1 MEM_OUT:   0 T0:   3 T1:  12 T2:   1 T3:  72 SP: 100 	addi t1, t1, -1
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  10 PC:   7/0 ADDR:   1 MEM_OUT:   0 T0:   3 T1:  11 T2:   1 T3:  72 SP: 100 	bne t1, zero, -5
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  11 PC:   7/1 ADDR:   1 MEM_OUT:   0 T0:   3 T1:  11 T2:   1 T3:  72 SP: 100 	bne t1, zero, -5
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  12 PC:   2/0 ADDR:   1 MEM_OUT:   0 T0:   3 T1:  11 T2:   1 T3:  72 SP: 100 	addi t0, t0, 1
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  13 PC:   3/0 ADDR:   1 MEM_OUT:   0 T0:   4 T1:  11 T2:   1 T3:  72 SP: 100 	lw t3, t0, 0
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  14 PC:   3/1 ADDR:   4 MEM_OUT: 101 T0:   4 T1:  11 T2:   1 T3:  72 SP: 100 	lw t3, t0, 0
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  15 PC:   4/0 ADDR:   4 MEM_OUT: 101 T0:   4 T1:  11 T2:   1 T3: 101 SP: 100 	addi t2, zero, 1
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  16 PC:   5/0 ADDR:   4 MEM_OUT: 101 T0:   4 T1:  11 T2:   1 T3: 101 SP: 100 	sw t3, t2
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  17 PC:   5/1 ADDR:   1 MEM_OUT:   0 T0:   4 T1:  11 T2:   1 T3: 101 SP: 100 	sw t3, t2
-  DEBUG   data_path:signal_data_memory_store output: 'H' << 'e'
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  18 PC:   6/0 ADDR:   1 MEM_OUT:   0 T0:   4 T1:  11 T2:   1 T3: 101 SP: 100 	addi t1, t1, -1
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  19 PC:   7/0 ADDR:   1 MEM_OUT:   0 T0:   4 T1:  10 T2:   1 T3: 101 SP: 100 	bne t1, zero, -5
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  20 PC:   7/1 ADDR:   1 MEM_OUT:   0 T0:   4 T1:  10 T2:   1 T3: 101 SP: 100 	bne t1, zero, -5
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  21 PC:   2/0 ADDR:   1 MEM_OUT:   0 T0:   4 T1:  10 T2:   1 T3: 101 SP: 100 	addi t0, t0, 1
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  22 PC:   3/0 ADDR:   1 MEM_OUT:   0 T0:   5 T1:  10 T2:   1 T3: 101 SP: 100 	lw t3, t0, 0
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  23 PC:   3/1 ADDR:   5 MEM_OUT: 108 T0:   5 T1:  10 T2:   1 T3: 101 SP: 100 	lw t3, t0, 0
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  24 PC:   4/0 ADDR:   5 MEM_OUT: 108 T0:   5 T1:  10 T2:   1 T3: 108 SP: 100 	addi t2, zero, 1
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  25 PC:   5/0 ADDR:   5 MEM_OUT: 108 T0:   5 T1:  10 T2:   1 T3: 108 SP: 100 	sw t3, t2
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  26 PC:   5/1 ADDR:   1 MEM_OUT:   0 T0:   5 T1:  10 T2:   1 T3: 108 SP: 100 	sw t3, t2
-  DEBUG   data_path:signal_data_memory_store oEOF
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:   0 PC:   0/0 ADDR:   0 MEM_OUT:   0 T0:   0 T1:   0 T2:   0 T3:   0 SP: 1000 	addi t0, zero, 2
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:   1 PC:   1/0 ADDR:   0 MEM_OUT:   0 T0:   2 T1:   0 T2:   0 T3:   0 SP: 1000 	addi sp, sp, -1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:   2 PC:   2/0 ADDR:   0 MEM_OUT:   0 T0:   2 T1:   0 T2:   0 T3:   0 SP: 999 	sw t0, sp
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:   3 PC:   2/1 ADDR: 999 MEM_OUT:   0 T0:   2 T1:   0 T2:   0 T3:   0 SP: 999 	sw t0, sp
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:   4 PC:   3/0 ADDR: 999 MEM_OUT:   2 T0:   2 T1:   0 T2:   0 T3:   0 SP: 999 	lw t0, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:   5 PC:   3/1 ADDR: 999 MEM_OUT:   2 T0:   2 T1:   0 T2:   0 T3:   0 SP: 999 	lw t0, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:   6 PC:   4/0 ADDR: 999 MEM_OUT:   2 T0:   2 T1:   0 T2:   0 T3:   0 SP: 999 	addi sp, sp, -1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:   7 PC:   5/0 ADDR: 999 MEM_OUT:   2 T0:   2 T1:   0 T2:   0 T3:   0 SP: 998 	sw t0, sp
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:   8 PC:   5/1 ADDR: 998 MEM_OUT:   0 T0:   2 T1:   0 T2:   0 T3:   0 SP: 998 	sw t0, sp
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:   9 PC:   6/0 ADDR: 998 MEM_OUT:   2 T0:   2 T1:   0 T2:   0 T3:   0 SP: 998 	addi t0, zero, 1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  10 PC:   7/0 ADDR: 998 MEM_OUT:   2 T0:   1 T1:   0 T2:   0 T3:   0 SP: 998 	addi sp, sp, -1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  11 PC:   8/0 ADDR: 998 MEM_OUT:   2 T0:   1 T1:   0 T2:   0 T3:   0 SP: 997 	sw t0, sp
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  12 PC:   8/1 ADDR: 997 MEM_OUT:   0 T0:   1 T1:   0 T2:   0 T3:   0 SP: 997 	sw t0, sp
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  13 PC:   9/0 ADDR: 997 MEM_OUT:   1 T0:   1 T1:   0 T2:   0 T3:   0 SP: 997 	lw t0, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  14 PC:   9/1 ADDR: 997 MEM_OUT:   1 T0:   1 T1:   0 T2:   0 T3:   0 SP: 997 	lw t0, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  15 PC:  10/0 ADDR: 997 MEM_OUT:   1 T0:   1 T1:   0 T2:   0 T3:   0 SP: 997 	addi sp, sp, 1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  16 PC:  11/0 ADDR: 997 MEM_OUT:   1 T0:   1 T1:   0 T2:   0 T3:   0 SP: 998 	lw t1, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  17 PC:  11/1 ADDR: 998 MEM_OUT:   2 T0:   1 T1:   0 T2:   0 T3:   0 SP: 998 	lw t1, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  18 PC:  12/0 ADDR: 998 MEM_OUT:   2 T0:   1 T1:   2 T2:   0 T3:   0 SP: 998 	addi sp, sp, 1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  19 PC:  13/0 ADDR: 998 MEM_OUT:   2 T0:   1 T1:   2 T2:   0 T3:   0 SP: 999 	add t0, t1, t0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  20 PC:  14/0 ADDR: 998 MEM_OUT:   2 T0:   3 T1:   2 T2:   0 T3:   0 SP: 999 	addi sp, sp, -1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  21 PC:  15/0 ADDR: 998 MEM_OUT:   2 T0:   3 T1:   2 T2:   0 T3:   0 SP: 998 	sw t0, sp
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  22 PC:  15/1 ADDR: 998 MEM_OUT:   2 T0:   3 T1:   2 T2:   0 T3:   0 SP: 998 	sw t0, sp
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  23 PC:  16/0 ADDR: 998 MEM_OUT:   3 T0:   3 T1:   2 T2:   0 T3:   0 SP: 998 	lw t0, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  24 PC:  16/1 ADDR: 998 MEM_OUT:   3 T0:   3 T1:   2 T2:   0 T3:   0 SP: 998 	lw t0, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  25 PC:  17/0 ADDR: 998 MEM_OUT:   3 T0:   3 T1:   2 T2:   0 T3:   0 SP: 998 	addi sp, sp, 1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  26 PC:  18/0 ADDR: 998 MEM_OUT:   3 T0:   3 T1:   2 T2:   0 T3:   0 SP: 999 	lw t1, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  27 PC:  18/1 ADDR: 999 MEM_OUT:   2 T0:   3 T1:   2 T2:   0 T3:   0 SP: 999 	lw t1, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TIEOF
 out_code_hex: |-
   is interrupts enabled: False
   interrupt handler address: 0
@@ -62,11 +101,86 @@ out_code_hex: |-
    14 - 00000021 - 00000000000000000000000000100001
   instructions
     0 - 00046084 - 00000000000001000110000010000100 - addi t0, zero, 2
-    1 - 00001103 - 00000000000000000001000100000011 - lw t1, t0, 0
-    2 - 00021084 - 00000000000000100001000010000100 - addi t0, t0, 1
-    3 - 00001203 - 00000000000000000001001000000011 - lw t3, t0, 0
-    4 - 00026184 - 00000000000000100110000110000100 - addi t2, zero, 1
-    5 - 00083002 - 00000000000010000011000000000010 - sw t3, t2
-    6 - FFFE2104 - 11111111111111100010000100000100 - addi t1, t1, -1
-    7 - FFCC2D90 - 11111111110011000010110110010000 - bne t1, zero, -5
-    8 - 00000015 - 00000000000000000000000000010101 - halt
+    1 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+    2 - 00025002 - 00000000000000100101000000000010 - sw t0, sp
+    3 - 00005083 - 00000000000000000101000010000011 - lw t0, sp, 0
+    4 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+    5 - 00025002 - 00000000000000100101000000000010 - sw t0, sp
+    6 - 00026084 - 00000000000000100110000010000100 - addi t0, zero, 1
+    7 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+    8 - 00025002 - 00000000000000100101000000000010 - sw t0, sp
+    9 - 00005083 - 00000000000000000101000010000011 - lw t0, sp, 0
+   10 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   11 - 00005103 - 00000000000000000101000100000011 - lw t1, sp, 0
+   12 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   13 - 00022085 - 00000000000000100010000010000101 - add t0, t1, t0
+   14 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+   15 - 00025002 - 00000000000000100101000000000010 - sw t0, sp
+   16 - 00005083 - 00000000000000000101000010000011 - lw t0, sp, 0
+   17 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   18 - 00005103 - 00000000000000000101000100000011 - lw t1, sp, 0
+   19 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   20 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+   21 - 00025002 - 00000000000000100101000000000010 - sw t0, sp
+   22 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+   23 - 00045002 - 00000000000001000101000000000010 - sw t1, sp
+   24 - 00005083 - 00000000000000000101000010000011 - lw t0, sp, 0
+   25 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   26 - 00001083 - 00000000000000000001000010000011 - lw t0, t0, 0
+   27 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+   28 - 00025002 - 00000000000000100101000000000010 - sw t0, sp
+   29 - 00005083 - 00000000000000000101000010000011 - lw t0, sp, 0
+   30 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   31 - 00005103 - 00000000000000000101000100000011 - lw t1, sp, 0
+   32 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   33 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+   34 - 00025002 - 00000000000000100101000000000010 - sw t0, sp
+   35 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+   36 - 00045002 - 00000000000001000101000000000010 - sw t1, sp
+   37 - 00005083 - 00000000000000000101000010000011 - lw t0, sp, 0
+   38 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+   39 - 00025002 - 00000000000000100101000000000010 - sw t0, sp
+   40 - 00005083 - 00000000000000000101000010000011 - lw t0, sp, 0
+   41 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   42 - 00001083 - 00000000000000000001000010000011 - lw t0, t0, 0
+   43 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+   44 - 00025002 - 00000000000000100101000000000010 - sw t0, sp
+   45 - 00005083 - 00000000000000000101000010000011 - lw t0, sp, 0
+   46 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   47 - 00026104 - 00000000000000100110000100000100 - addi t1, zero, 1
+   48 - 00022002 - 00000000000000100010000000000010 - sw t0, t1
+   49 - 00026084 - 00000000000000100110000010000100 - addi t0, zero, 1
+   50 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+   51 - 00025002 - 00000000000000100101000000000010 - sw t0, sp
+   52 - 00005083 - 00000000000000000101000010000011 - lw t0, sp, 0
+   53 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   54 - 00005103 - 00000000000000000101000100000011 - lw t1, sp, 0
+   55 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   56 - 00022085 - 00000000000000100010000010000101 - add t0, t1, t0
+   57 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+   58 - 00025002 - 00000000000000100101000000000010 - sw t0, sp
+   59 - 00005083 - 00000000000000000101000010000011 - lw t0, sp, 0
+   60 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   61 - 00005103 - 00000000000000000101000100000011 - lw t1, sp, 0
+   62 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   63 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+   64 - 00025002 - 00000000000000100101000000000010 - sw t0, sp
+   65 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+   66 - 00045002 - 00000000000001000101000000000010 - sw t1, sp
+   67 - 00026084 - 00000000000000100110000010000100 - addi t0, zero, 1
+   68 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+   69 - 00025002 - 00000000000000100101000000000010 - sw t0, sp
+   70 - 00005083 - 00000000000000000101000010000011 - lw t0, sp, 0
+   71 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   72 - 00005103 - 00000000000000000101000100000011 - lw t1, sp, 0
+   73 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   74 - 00022087 - 00000000000000100010000010000111 - sub t0, t1, t0
+   75 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+   76 - 00025002 - 00000000000000100101000000000010 - sw t0, sp
+   77 - 00005083 - 00000000000000000101000010000011 - lw t0, sp, 0
+   78 - FFFE5284 - 11111111111111100101001010000100 - addi sp, sp, -1
+   79 - 00025002 - 00000000000000100101000000000010 - sw t0, sp
+   80 - 00005083 - 00000000000000000101000010000011 - lw t0, sp, 0
+   81 - 00025284 - 00000000000000100101001010000100 - addi sp, sp, 1
+   82 - FF8C1592 - 11111111100011000001010110010010 - bne t0, zero, -53
+   83 - 00000017 - 00000000000000000000000000010111 - halt

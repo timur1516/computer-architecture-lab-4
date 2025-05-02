@@ -2,11 +2,15 @@ from src.translator.ast.__ast import (
     Ast,
     AstBlock,
     AstDefinition,
+    AstDVariableDeclaration,
+    AstExtendedNumber,
     AstIfStatement,
     AstInterrupt,
     AstLiteral,
+    AstMemoryBlockDeclaration,
     AstNumber,
     AstOperation,
+    AstStringDeclaration,
     AstSymbol,
     AstVariableDeclaration,
     AstWhileStatement,
@@ -26,6 +30,9 @@ class AstPrinter(AstNodeVisitor):
 
     def visit_number(self, node: AstNumber):
         self._print(f"NUMBER: {node.value}")
+
+    def visit_extended_number(self, node: AstExtendedNumber):
+        self._print(f"EXTENDED NUMBER: {node.value}")
 
     def visit_block(self, node: AstBlock):
         for block in node.children:
@@ -65,6 +72,19 @@ class AstPrinter(AstNodeVisitor):
 
     def visit_variable_declaration(self, node: AstVariableDeclaration):
         self._print(f"VARIABLE: {node.name}")
+
+    def visit_d_variable_declaration(self, node: AstDVariableDeclaration):
+        self._print(f"D_VARIABLE: {node.name}")
+
+    def visit_string_declaration(self, node: AstStringDeclaration):
+        self._print(f"STRING DECLARATION: {node.name}")
+        self.tab += 1
+        self.visit(node.literal)
+        self.tab -= 1
+        self._print("END STRING DECLARATION")
+
+    def visit_memory_block_declaration(self, node: AstMemoryBlockDeclaration):
+        self._print(f"MEMORY BLOCK DECLARATION: {node.name} {node.size}")
 
     def visit_definition(self, node: AstDefinition):
         self._print(f"DEFINITION: {node.name}")
