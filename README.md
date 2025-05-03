@@ -556,7 +556,7 @@ GitHub Actions при совершении `push`-а автоматически
 
 Обновить конфигурацию golden tests:  `poetry run pytest . -v --update-goldens`
 
-### Результаты тестирования:
+### Результаты тестирования
 
 Golden-тесты:
 
@@ -629,13 +629,12 @@ test/golden_test.py                                    33      0   100%
 TOTAL                                                1574    178    89%
 ```
 
-### Алгоритмы согласно варианту:
+### Алгоритмы согласно варианту
 
 - [hello_world](./test/golden/hello.yml)
 - [cat](./test/golden/cat.yml)
 - [hello_username](./test/golden/hello_user_name.yml)
 
-### Пример использования модели процессора:
+### Пример использования модели процессора
 
 ДОБАВИТЬ
-
