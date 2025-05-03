@@ -2,6 +2,8 @@ from enum import Enum
 
 
 class TokenType(str, Enum):
+    """Типы токенов"""
+
     NUMBER = "NUMBER"
     EXTENDED_NUMBER = "EXTENDED_NUMBER"
     SYMBOL = "SYMBOL"
@@ -9,8 +11,6 @@ class TokenType(str, Enum):
 
     BEGIN_INT = "begin_int"
     END_INT = "end_int"
-    ENABLE_INT = "en_int"
-    DISABLE_INT = "di_int"
 
     PLUS = "+"
     MINUS = "-"
@@ -25,10 +25,6 @@ class TokenType(str, Enum):
     XOR = "xor"
     NOT = "not"
 
-    DUP = "dup"
-    DROP = "drop"
-    SWAP = "swap"
-
     EQUALS = "="
     NOT_EQUALS = "!="
     GREATER = ">"
@@ -36,13 +32,20 @@ class TokenType(str, Enum):
     LESS = "<"
     LESS_EQUAL = "<="
 
-    PRINT = "print"
-    READ = "read"
-
-    STR_LITERAL_SEP = '"'
+    DUP = "dup"
+    DROP = "drop"
+    SWAP = "swap"
 
     STORE = "store"
     LOAD = "load"
+
+    PRINT = "print"
+    READ = "read"
+
+    ENABLE_INT = "en_int"
+    DISABLE_INT = "di_int"
+
+    STR_LITERAL_SEP = '"'
 
     IF = "if"
     THEN = "then"
@@ -57,5 +60,7 @@ class TokenType(str, Enum):
     D_VAR = "2var"
     STR = "str"
     ALLOC = "alloc"
+
+    COMMENT_START = "\\"
 
     EOF = "EOF"

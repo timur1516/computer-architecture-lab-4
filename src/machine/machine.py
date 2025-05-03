@@ -19,6 +19,19 @@ def simulation(
     data_memory_size: int,
     limit: int,
 ) -> str:
+    """Подготовка модели и запуск симуляции процессора.
+
+    Выполняет:
+
+    - инициализацию `ControlUnit` и `DataPath`
+
+    - обработку исключений
+
+    - контроль количества тактов
+
+    - логирование
+    """
+
     assert len(init_data_memory) <= data_memory_size, "memory overflow"
 
     data_path = DataPath(data_memory_size, init_data_memory)
@@ -42,6 +55,10 @@ def simulation(
 
 
 def main(code_file: str, input_file: str):
+    """Функция запуска модели процессора. Параметры -- имена файлов с машинным
+    кодом и расписанием прерываний с входными данными для симуляции.
+    """
+
     with open(code_file, "rb") as file:
         binary_code = file.read()
     code, data_memory, interrupt_handler_address, is_interrupts_enabled = from_bytes(binary_code)
@@ -68,6 +85,6 @@ def main(code_file: str, input_file: str):
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.DEBUG)
-    assert len(sys.argv) == 3, "Wrong arguments: machine.py <code_file> <input_file>"
+    assert len(sys.argv) == 3, "Wrong arguments: machine.py <code_file> <input_timetable_file>"
     _, code_file, input_file = sys.argv
     main(code_file, input_file)

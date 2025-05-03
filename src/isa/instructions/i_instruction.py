@@ -1,3 +1,5 @@
+from typing_extensions import override
+
 from src.isa.instructions.instruction import Instruction
 from src.isa.opcode_ import Opcode, binary_to_opcode, opcode_to_binary
 from src.isa.register import Register, binary_to_register, register_to_binary
@@ -5,9 +7,29 @@ from src.isa.util.binary import binary_to_signed_int, extract_bits, is_correct_b
 
 
 class IInstruction(Instruction):
+    """I-инструкции.
+
+    Это инструкции, использующие непосредственные (константные) значения. Например `addi`, `lw`.
+
+    Структура инструкции:
+
+    ```plaintext
+    ┌─────────────────────────────────────────┬─────────┬────────┬────────┐
+    │                 31...17                 │ 16...12 │ 11...7 │  6..0  │
+    ├─────────────────────────────────────────┼─────────┼────────┼────────┤
+    │                   imm                   │   rs1   │   rd   │ opcode │
+    └─────────────────────────────────────────┴─────────┴────────┴────────┘
+    ```
+    """
+
     rd = None
+    "код регистра назначения, 5 бит"
+
     rs1 = None
+    "код регистра источника, 5 бит"
+
     imm = None
+    "непосредственное значение, 15 бит"
 
     def __init__(self, opcode: Opcode, rd: Register, rs1: Register, imm: int):
         assert is_correct_bin_size_signed(imm, 15), "imm size in IInstruction must be 15 bits"
@@ -17,6 +39,7 @@ class IInstruction(Instruction):
         self.rs1 = rs1
         self.imm = imm
 
+    @override
     def to_binary(self) -> int:
         return (
             self.imm << 17
@@ -26,6 +49,7 @@ class IInstruction(Instruction):
         )
 
     @staticmethod
+    @override
     def from_binary(binary: int) -> "IInstruction":
         opcode_bin = extract_bits(binary, 7)
         opcode = binary_to_opcode[opcode_bin]
@@ -40,6 +64,7 @@ class IInstruction(Instruction):
 
         return IInstruction(opcode, rd, rs1, imm)
 
+    @override
     def to_json(self) -> dict:
         return {"opcode": str(self.opcode), "rd": str(self.rd), "rs1": str(self.rs1), "imm": self.imm}
 

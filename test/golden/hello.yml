@@ -1,5 +1,5 @@
 in_source: |-
-  str s " Hello World! "
+  str s " Hello World!"
   : count
     dup 1 + swap load
   ;

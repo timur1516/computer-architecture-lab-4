@@ -1,3 +1,5 @@
+from typing import override
+
 from src.isa.instructions.instruction import Instruction
 from src.isa.opcode_ import Opcode, binary_to_opcode, opcode_to_binary
 from src.isa.register import Register, binary_to_register, register_to_binary
@@ -5,9 +7,29 @@ from src.isa.util.binary import binary_to_signed_int, extract_bits, is_correct_b
 
 
 class BInstruction(Instruction):
+    """B-инструкции.
+
+    Это инструкции для условных переходов. Например `beq`, `bgt`.
+
+    Структура инструкции:
+
+    ```
+    ┌───────────────────────────────┬─────────┬─────────┬────────┬────────┐
+    │           31...22             │ 21...17 │ 16...12 │ 11...7 │  6..0  │
+    ├───────────────────────────────┼─────────┼─────────┼────────┼────────┤
+    │              imm              │   rs2   │   rs1   │   imm  │ opcode │
+    └───────────────────────────────┴─────────┴─────────┴────────┴────────┘
+    ```
+    """
+
     rs1 = None
+    "код регистра первого операнда, 5 бит"
+
     rs2 = None
+    "код регистра второго операнда, 5 бит"
+
     imm = None
+    "величина смещения, 15 бит"
 
     def __init__(self, opcode: Opcode, rs1: Register, rs2: Register, imm: int):
         assert is_correct_bin_size_signed(imm, 15), "imm size in BInstruction must be 15 bits"
@@ -17,6 +39,7 @@ class BInstruction(Instruction):
         self.rs2 = rs2
         self.imm = imm
 
+    @override
     def to_binary(self) -> int:
         imm_lower = extract_bits(self.imm, 5)
         imm_upper = self.imm >> 5
@@ -47,6 +70,7 @@ class BInstruction(Instruction):
 
         return BInstruction(opcode, rs1, rs2, imm)
 
+    @override
     def to_json(self) -> dict:
         return {"opcode": str(self.opcode), "rs1": str(self.rs1), "rs2": str(self.rs2), "imm": self.imm}
 

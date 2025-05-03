@@ -1,3 +1,5 @@
+from typing import override
+
 from src.isa.instructions.instruction import Instruction
 from src.isa.opcode_ import Opcode, binary_to_opcode, opcode_to_binary
 from src.isa.register import Register, binary_to_register, register_to_binary
@@ -5,9 +7,29 @@ from src.isa.util.binary import extract_bits
 
 
 class RInstruction(Instruction):
+    """R-инструкции.
+
+    Это инструкции для выполнения арифметических и логических операций над данными в регистрах. Например `add`, `sub`.
+
+    Структура инструкции:
+
+    ```plaintext
+    ┌───────────────────────────────┬─────────┬─────────┬────────┬────────┐
+    │           31...22             │ 21...17 │ 16...12 │ 11...7 │  6..0  │
+    ├───────────────────────────────┼─────────┼─────────┼────────┼────────┤
+    │                               │   rs2   │   rs1   │   rd   │ opcode │
+    └───────────────────────────────┴─────────┴─────────┴────────┴────────┘
+    ```
+    """
+
     rd = None
+    "код регистра назначения, 5 бит"
+
     rs1 = None
+    "код регистра первого операнда, 5 бит"
+
     rs2 = None
+    "код регистра второго операнда, 5 бит"
 
     def __init__(self, opcode: Opcode, rd: Register, rs1: Register, rs2: Register):
         super().__init__(opcode)
@@ -15,6 +37,7 @@ class RInstruction(Instruction):
         self.rs1 = rs1
         self.rs2 = rs2
 
+    @override
     def to_binary(self) -> int:
         return (
             register_to_binary[self.rs2] << 17
@@ -24,6 +47,7 @@ class RInstruction(Instruction):
         )
 
     @staticmethod
+    @override
     def from_binary(binary: int) -> "RInstruction":
         opcode_bin = extract_bits(binary, 7)
         opcode = binary_to_opcode[opcode_bin]
@@ -39,6 +63,7 @@ class RInstruction(Instruction):
 
         return RInstruction(opcode, rd, rs1, rs2)
 
+    @override
     def to_json(self) -> dict:
         return {"opcode": str(self.opcode), "rd": str(self.rd), "rs1": str(self.rs1), "rs2": str(self.rs2)}
 

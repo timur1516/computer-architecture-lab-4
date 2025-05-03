@@ -16,7 +16,10 @@ from src.isa.register import Register
 from src.machine.data_path import DataPath
 
 
+# TODO: Подумать над необходимостью состояний
 class ProcessorState(str, Enum):
+    """Вспомогательный класс для хранения состояния процессора"""
+
     NORMAL = "NORMAL"
     INT_ENTER = "INT_ENTER"
     INT_BODY = "INT_BODY"
@@ -26,28 +29,46 @@ class ProcessorState(str, Enum):
         return self.value
 
 
+# TODO: Упростить задание адреса обработчика прерываний
+
+
 class ControlUnit:
+    """Блок управления процессора. Выполняет декодирование инструкций и
+    управляет состоянием модели процессора, включая обработку данных (DataPath).
+    """
+
     instruction_memory = None
+    "Память инструкций"
 
     data_path = None
+    "Блок обработки данных"
 
     program_counter = None
+    "Счётчик команд. Инициализируется нулём"
 
     input_timetable = None
+    "Расписание ввода, для обработки прерываний"
 
     _tick = None
+    "Текущее модельное время процессора (в тактах). Инициализируется нулём."
 
     step = None
+    "Номер шага для выполнения много тактовых инструкций"
 
     state = None
+    "Текущее состояние процессора"
 
     is_interrupt_request = None
+    "Флаг наличия запроса прерывания"
 
     interrupt_handler_address = None
+    "Адрес обработчика прерываний"
 
     pc_interrupt_buffer = None
+    "Буфер для сохранения счётчика команд при прерывании"
 
     is_interrupts_enabled = None
+    "Флаг разрешение прерываний"
 
     def __init__(
         self,
@@ -71,12 +92,16 @@ class ControlUnit:
         self.pc_interrupt_buffer = 0
 
     def tick(self):
+        """Продвинуть модельное время процессора вперёд на один такт."""
         self._tick += 1
 
     def get_tick(self):
+        """Получить текущее модельное время процессора (в тактах)."""
         return self._tick
 
     def _signal_latch_pc(self, next_pc: int):
+        """Защёлкнуть новое значение счётчика команд"""
+
         self.program_counter = next_pc
 
         assert self.program_counter < len(self.instruction_memory), "out of instruction memory: {}".format(
@@ -84,29 +109,46 @@ class ControlUnit:
         )
 
     def signal_latch_pc_seq(self):
+        """Защёлкнуть значение счётчика команд, увеличенное на единицу"""
+
         next_pc = self.program_counter + 1
         self._signal_latch_pc(next_pc)
 
     def signal_latch_pc_imm(self, imm: int):
+        """Защёлкнуть значение счётчика команд, смещённое относительно текущего на значение `imm`"""
+
         next_pc = self.data_path.signal_next_pc_imm(self.program_counter, imm)
         self._signal_latch_pc(next_pc)
 
     def signal_latch_pc_reg(self, rs2: Register, imm: int = 0):
+        """Защёлкнуть значение счётчика команд, смещённое относительно
+        значения в регистре `rs2` на значение `imm`"""
+
         next_pc = self.data_path.signal_next_pc_reg(imm, rs2)
         self._signal_latch_pc(next_pc)
 
     def signal_latch_pc_buf(self):
+        """Защёлкнуть значение счётчика команд из буфера счётчика команд"""
+
         next_pc = self.pc_interrupt_buffer
         self._signal_latch_pc(next_pc)
 
     def signal_latch_pc_interrupt(self):
+        """Защёлкнуть значение счётчика команд адресом прерывания"""
+
         next_pc = self.interrupt_handler_address
         self._signal_latch_pc(next_pc)
 
     def signal_latch_pc_interrupt_buffer(self):
+        """Защёлкнуть буфер счётчика команд текущим значением счётчика"""
+
         self.pc_interrupt_buffer = self.program_counter
 
     def process_next_tick(self):  # noqa: C901 # код хорошо структурирован, по этому не проблема.
+        """Основной цикл процессора. Декодирует и выполняет инструкцию."""
+
+        # TODO: Решить проблему прерывания но 0-м такте
+
         if self._tick in self.input_timetable:
             symbol = self.input_timetable[self._tick]
             logging.debug('Interrupt request on tick %s with symbol "%s"', self._tick, symbol)

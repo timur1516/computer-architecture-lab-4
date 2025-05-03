@@ -2,6 +2,8 @@ from enum import Enum
 
 
 class Opcode(Enum):
+    """Opcode инструкций"""
+
     LUI = "lui"
 
     SW = "sw"
@@ -40,4 +42,7 @@ class Opcode(Enum):
 
 
 opcode_to_binary = {op: i + 1 for i, op in enumerate(Opcode)}
+"Вспомогательный словарь, для преобразования opcode в бинарное представление"
+
 binary_to_opcode = {i + 1: op for i, op in enumerate(Opcode)}
+"Вспомогательный словарь, для преобразования бинарного представления opcode в объект"

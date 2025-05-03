@@ -8,10 +8,18 @@ from src.isa.opcode_ import binary_to_opcode
 from src.isa.opcode_to_instruction_map import opcode_to_instruction_type
 from src.isa.util.binary import bytes_to_int_array, extract_bits, int_to_bin_word
 
+"""Функции, выполняющие преобразование между различными формами представления инструкций и данных
+"""
+
+# TODO: Разделить данные и инструкции на разные файлы
+# TODO: Убрать адрес обработчика прерываний и флаг разрешения прерываний из бинарного файла
+
 
 def to_bytes(
     code: list[Instruction], data: list[int], is_interrupts_enabled: bool, interrupt_handler_address: int
 ) -> bytes:
+    """Преобразование набора инструкций и данных в массив байт"""
+
     binary_code = bytearray()
 
     binary_code.extend(int_to_bin_word(int(is_interrupts_enabled)))
@@ -32,6 +40,11 @@ def to_bytes(
 
 
 def to_hex(binary_code: bytes) -> str:
+    """Преобразование данных и инструкций из массива байт в шестнадцатеричное представление
+
+    Адреса рассчитываются в процессе формирования результата
+    """
+
     result = []
     data_address = DATA_AREA_START_ADDR
     instruction_address = 0
@@ -77,7 +90,9 @@ def to_hex(binary_code: bytes) -> str:
     return "\n".join(result)
 
 
-def from_bytes(binary_code) -> (list[Instruction], list[int], int, bool):
+def from_bytes(binary_code: bytes) -> (list[Instruction], list[int], int, bool):
+    """Преобразование бинарного представление машинного кода и данных в структурированный формат"""
+
     instructions = []
     data = []
 
@@ -111,6 +126,12 @@ def write_json(
     is_interrupts_enabled: bool,
     interrupt_handler_address: int,
 ):
+    """Запись инструкций и данных в json файл.
+
+    При преобразовании используется внутренне json-представление инструкций
+
+    Адреса рассчитываются в процессе формирования файла
+    """
     data_address = DATA_AREA_START_ADDR
     instruction_address = 0
     data_buf = []

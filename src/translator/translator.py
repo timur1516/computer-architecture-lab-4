@@ -7,7 +7,7 @@ from src.isa.instructions.instruction import Instruction
 from src.isa.memory_config import DATA_AREA_START_ADDR
 from src.isa.opcode_ import Opcode
 from src.isa.util.data_translators import to_bytes, to_hex, write_json
-from src.translator.ast.__ast import (
+from src.translator.ast_.ast_ import (
     AstDVariableDeclaration,
     AstExtendedNumber,
     AstInterrupt,
@@ -15,10 +15,9 @@ from src.translator.ast.__ast import (
     AstMemoryBlockDeclaration,
     AstStringDeclaration,
 )
-from src.translator.ast.ast_node_visitor import (
+from src.translator.ast_.ast_node_visitor import (
     Ast,
     AstBlock,
-    AstDefinition,
     AstIfStatement,
     AstNodeVisitor,
     AstNumber,
@@ -27,7 +26,7 @@ from src.translator.ast.ast_node_visitor import (
     AstVariableDeclaration,
     AstWhileStatement,
 )
-from src.translator.ast.ast_printer import AstPrinter
+from src.translator.ast_.ast_printer import AstPrinter
 from src.translator.lexer import Lexer
 from src.translator.parser import Parser
 from src.translator.traslator_instruction_producers import (
@@ -39,28 +38,78 @@ from src.translator.traslator_instruction_producers import (
     while_instructions_producer,
 )
 
+# TODO: Добавить include из других файлов
+
 
 class Translator(AstNodeVisitor):
-    tree = None
-    symbol_table = None
-    literals = None
-    data = None
-    instructions = None
-    interrupts = None
-    interrupt_handler_address = None
-    is_interrupts_enabled = None
+    """Переводит AST-дерево в набор инструкций для процессора
 
-    def __init__(self, tree: Ast, symbol_table: dict, literals: list[str]):
+    Также производит формирование массива данных, выделяя место под
+    переменные и заполняя строковые литералы
+    """
+
+    tree = None
+    "AST-дерево, c программой"
+
+    symbol_table = None
+    "Таблица символов"
+
+    literals = None
+    "Массив литералов"
+
+    data = None
+    """Массив данных.
+
+    Инициализируется пустым.
+
+    B процессе трансляции в него записываются переменные и строковые литералы
+    """
+
+    instructions = None
+    "Массив инструкций. Инициализируется пустым"
+
+    interrupts = None
+    "Массив инструкция для прерывания. Инициализируется пустым"
+
+    interrupt_handler_address = None
+    """Адрес обработчика прерывания.
+
+    Инициализируется нулём.
+
+    Значение определяется после завершения парсинга основной программы.
+
+    B случае если в программе был блок прерываний, этот адрес будет установлен в адрес после конца основной программы
+    """
+
+    is_interrupts_enabled = None
+    """Флаг наличия прерываний
+
+    Инициализируется значением `False`
+
+    Устанавливается в `True` если в программе был хоть один блок обработки прерываний
+    """
+
+    def __init__(self, tree: Ast, symbol_table: dict[str, int], literals: list[str]):
         self.tree = tree
         self.symbol_table = symbol_table
         self.literals = literals
-        self.data = []
-        self.instructions = []
-        self.interrupts = []
+        self.data: list[int] = []
+        self.instructions: list[Instruction] = []
+        self.interrupts: list[Instruction] = []
         self.interrupt_handler_address = 0
         self.is_interrupts_enabled = False
 
     def translate(self) -> list[Instruction]:
+        """Основная функция трансляции
+
+        Выполняет следующие операции:
+
+        - Получает массив инструкций и добавляет `HALT` в конец
+
+        - Если в программе был блок обработки прерываний то устанавливается флаг наличия прерываний,
+          записывается адрес обработчика прерываний и блок обработчика дописывается в основного конец массива инструкций
+        """
+
         self.instructions = self.visit(self.tree)
         self.instructions.append(Instruction(Opcode.HALT))
 
@@ -87,6 +136,8 @@ class Translator(AstNodeVisitor):
         return result
 
     def visit_interrupt(self, node: AstInterrupt) -> list[Instruction]:
+        """Парсит блок в массив `interrupts` и дописывает инструкцию `RINT` в конец"""
+
         self.interrupts += self.visit_block(node.block)
         self.interrupts.append(Instruction(Opcode.RINT))
         return []
@@ -96,6 +147,7 @@ class Translator(AstNodeVisitor):
         return symbol_instructions_producer(symbol_address)
 
     def visit_literal(self, node: AstLiteral) -> list[Instruction]:
+        """Загружает значение из массива литералов, и записывает его в `data` в виде паскаль-строки"""
         value = self.literals[node.value_id]
         self.data.append(len(value))
         for c in value:
@@ -103,24 +155,32 @@ class Translator(AstNodeVisitor):
         return []
 
     def visit_variable_declaration(self, node: AstVariableDeclaration) -> list[Instruction]:
+        """Рассчитывает адрес переменной, записывает его в таблицу символов и добавляет ячейку в `data`"""
+
         address = DATA_AREA_START_ADDR + len(self.data)
         self.symbol_table[node.name] = address
         self.data.append(0)
         return []
 
     def visit_d_variable_declaration(self, node: AstDVariableDeclaration) -> list[Instruction]:
+        """Рассчитывает адрес переменной, записывает его в таблицу символов и добавляет две ячейки в `data`"""
+
         address = DATA_AREA_START_ADDR + len(self.data)
         self.symbol_table[node.name] = address
         self.data += [0] * 2
         return []
 
     def visit_string_declaration(self, node: AstStringDeclaration) -> list[Instruction]:
+        """Рассчитывает адрес переменной, записывает его в таблицу символов и добавляет строку в `data`"""
+
         address = DATA_AREA_START_ADDR + len(self.data)
         self.symbol_table[node.name] = address
         self.visit(node.literal)
         return []
 
     def visit_memory_block_declaration(self, node: AstMemoryBlockDeclaration) -> list[Instruction]:
+        """Рассчитывает адрес переменной, записывает его в таблицу символов и добавляет `size` количество ячеек в `data`"""
+
         address = DATA_AREA_START_ADDR + len(self.data)
         self.symbol_table[node.name] = address
         self.data += [0] * node.size
@@ -135,11 +195,15 @@ class Translator(AstNodeVisitor):
         while_block_instructions = self.visit(node.while_block)
         return while_instructions_producer(while_block_instructions)
 
-    def visit_definition(self, node: AstDefinition) -> list[Instruction]:
-        return []
-
 
 def translate(text: str) -> (list[Instruction], list[int], list[int], bool):
+    """Основная функция трансляции
+
+    Выполняет инициализацию лексера, парсера и транслятора, и их использование
+
+    На выходе даёт набор массив инструкций, блок данных и информацию о прерываниях
+    """
+
     ast_printer = AstPrinter()
     parser = Parser(Lexer(text))
 
@@ -155,6 +219,8 @@ def translate(text: str) -> (list[Instruction], list[int], list[int], bool):
 
 
 def main(source: str, target: str):
+    """Функция запуска транслятора. Параметры -- исходный и целевой файлы."""
+
     with open(source, encoding="utf-8") as f:
         source = f.read()
 

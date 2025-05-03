@@ -13,6 +13,9 @@ from src.isa.register import Register
 from src.isa.util.binary import binary_to_signed_int, is_correct_bin_size_signed
 from src.translator.token.token_type import TokenType
 
+# TODO: Добавить обработку "длинных переходов с использованием JR"
+# TODO: Подумать над оптимизацией количества инструкций, за счёт упрощённого выполнения операций на стеке (без явного PUSH и POP)
+
 
 def pop_to_register_instructions_producer(rd: Register) -> list[Instruction]:
     return [

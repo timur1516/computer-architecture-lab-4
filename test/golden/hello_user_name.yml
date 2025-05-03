@@ -53,9 +53,9 @@ in_source: |-
 
   \ Объявление необходимых переменных
 
-  str     welcome_string      " What is your name? "
-  str     hello_string        " Hello,  "
-  str     exclamation_mark    " ! "
+  str     welcome_string      " What is your name?"
+  str     hello_string        " Hello, "
+  str     exclamation_mark    " !"
   alloc   input_buffer        50
   var     is_data_ready
   var     eof_symbol

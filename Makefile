@@ -1,3 +1,5 @@
+.PHONY: all format lint test test-update-golden
+
 all: format lint test
 
 format:

@@ -1,7 +1,6 @@
-from src.translator.ast.__ast import (
+from src.translator.ast_.ast_ import (
     Ast,
     AstBlock,
-    AstDefinition,
     AstDVariableDeclaration,
     AstExtendedNumber,
     AstIfStatement,
@@ -18,7 +17,16 @@ from src.translator.ast.__ast import (
 
 
 class AstNodeVisitor:
+    """Абстрактный класс для обхода AST-дерева"""
+
     def visit(self, node: Ast):  # noqa: C901 # сделано ради простоты и прозрачности
+        """Основной метод для обхода AST-дерева.
+
+        Принимает абстрактную вершину и в зависимости от её типа выбирает метод обработчик
+        """
+
+        # TODO: Возможно заменить на синтаксический сахар
+
         if isinstance(node, AstOperation):
             return self.visit_operation(node)
         if isinstance(node, AstNumber):
@@ -45,8 +53,6 @@ class AstNodeVisitor:
             return self.visit_string_declaration(node)
         if isinstance(node, AstMemoryBlockDeclaration):
             return self.visit_memory_block_declaration(node)
-        if isinstance(node, AstDefinition):
-            return self.visit_definition(node)
         raise RuntimeError(f"Unsupported node type: {type(node)}")  # noqa: TRY003 # нет смысла в пользовательском исключении
 
     def visit_operation(self, node: AstOperation):
@@ -86,7 +92,4 @@ class AstNodeVisitor:
         pass
 
     def visit_memory_block_declaration(self, node: AstMemoryBlockDeclaration):
-        pass
-
-    def visit_definition(self, node: AstDefinition):
         pass

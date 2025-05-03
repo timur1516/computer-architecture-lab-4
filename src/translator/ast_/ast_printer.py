@@ -1,7 +1,6 @@
-from src.translator.ast.__ast import (
+from src.translator.ast_.ast_ import (
     Ast,
     AstBlock,
-    AstDefinition,
     AstDVariableDeclaration,
     AstExtendedNumber,
     AstIfStatement,
@@ -15,11 +14,17 @@ from src.translator.ast.__ast import (
     AstVariableDeclaration,
     AstWhileStatement,
 )
-from src.translator.ast.ast_node_visitor import AstNodeVisitor
+from src.translator.ast_.ast_node_visitor import AstNodeVisitor
 
 
 class AstPrinter(AstNodeVisitor):
+    """Вспомогательный класс для вывода AST-дерева в консоль
+
+    Использовался для отладки
+    """
+
     tab = None
+    "Количество табуляций. Позволяет визуализировать структура вложенности"
 
     def print(self, tree: Ast):
         self.tab = 0
@@ -85,13 +90,6 @@ class AstPrinter(AstNodeVisitor):
 
     def visit_memory_block_declaration(self, node: AstMemoryBlockDeclaration):
         self._print(f"MEMORY BLOCK DECLARATION: {node.name} {node.size}")
-
-    def visit_definition(self, node: AstDefinition):
-        self._print(f"DEFINITION: {node.name}")
-        self.tab += 1
-        self.visit(node.block)
-        self.tab -= 1
-        self._print("END DEFINITION")
 
     def _print(self, data: str):
         print("\t" * self.tab + data)
