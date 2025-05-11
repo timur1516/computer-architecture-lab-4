@@ -41,3 +41,15 @@ class NameIsAlreadyInUseError(TranslationError):
     def __init__(self, name_: str):
         self.name_ = name_
         super().__init__(f"Name >{name_}< is already in use")
+
+
+class IncludeFileNotFoundError(TranslationError):
+    def __init__(self, include_path: str):
+        self.include_path = include_path
+        super().__init__(f"Include file {include_path} not found")
+
+
+class IncludeFileReadingError(TranslationError):
+    def __init__(self, include_path: str):
+        self.include_path = include_path
+        super().__init__(f"Could not read include file {include_path}")

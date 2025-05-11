@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import copy
+
 from src.isa.instructions.b_instruction import BInstruction
 from src.isa.instructions.i_instruction import IInstruction
 from src.isa.instructions.instruction import Instruction
@@ -86,7 +88,7 @@ def symbol_instructions_producer(symbol_address: int) -> list[Instruction]:
 
 def operation_instructions_producer(token_type: TokenType) -> list[Instruction]:
     assert token_type in OPERATION_TRANSLATION, "Unsupported operation"
-    return OPERATION_TRANSLATION[token_type]
+    return copy.deepcopy(OPERATION_TRANSLATION[token_type])
 
 
 OPERATION_TRANSLATION = {

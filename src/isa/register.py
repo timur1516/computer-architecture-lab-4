@@ -20,5 +20,3 @@ register_to_binary = {rg: i + 1 for i, rg in enumerate(Register)}
 
 binary_to_register = {i + 1: rg for i, rg in enumerate(Register)}
 "Вспомогательный словарь, для преобразования бинарное представление регистров в объекты"
-
-binary_to_register[0] = None  # TODO: Разобраться с этим костылём

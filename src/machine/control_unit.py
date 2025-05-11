@@ -14,6 +14,7 @@ from src.isa.instructions.u_instruction import UInstruction
 from src.isa.opcode_ import Opcode
 from src.isa.register import Register
 from src.machine.data_path import DataPath
+from src.machine.util import int_to_char_or_int
 
 
 # TODO: Подумать над необходимостью состояний
@@ -27,9 +28,6 @@ class ProcessorState(str, Enum):
 
     def __str__(self):
         return self.value
-
-
-# TODO: Упростить задание адреса обработчика прерываний
 
 
 class ControlUnit:
@@ -68,26 +66,25 @@ class ControlUnit:
     "Буфер для сохранения счётчика команд при прерывании"
 
     is_interrupts_enabled = None
-    "Флаг разрешение прерываний"
+    "Флаг разрешение прерываний. Инициализируется значением `False`"
 
     def __init__(
         self,
         instruction_memory: list[Instruction],
         data_path: DataPath,
-        input_timetable: list[tuple[int, chr]],
-        is_interrupts_enabled: bool,
+        input_timetable: dict[int, int],
         interrupt_handler_address: int,
     ):
         self.instruction_memory = instruction_memory
         self.data_path = data_path
-        self.is_interrupts_enabled = is_interrupts_enabled
-        self.input_timetable = dict(input_timetable)
+        self.input_timetable = input_timetable
         self.interrupt_handler_address = interrupt_handler_address
 
         self.program_counter = 0
         self._tick = 0
         self.step = 0
         self.state = ProcessorState.NORMAL
+        self.is_interrupts_enabled = False
         self.is_interrupt_request = False
         self.pc_interrupt_buffer = 0
 
@@ -147,18 +144,16 @@ class ControlUnit:
     def process_next_tick(self):  # noqa: C901 # код хорошо структурирован, по этому не проблема.
         """Основной цикл процессора. Декодирует и выполняет инструкцию."""
 
-        # TODO: Решить проблему прерывания но 0-м такте
-
         if self._tick in self.input_timetable:
-            symbol = self.input_timetable[self._tick]
-            logging.debug('Interrupt request on tick %s with symbol "%s"', self._tick, symbol)
+            value = self.input_timetable[self._tick]
+            logging.debug("Interrupt request on tick %s with value %s", self._tick, int_to_char_or_int(value))
             if not self.is_interrupts_enabled:
                 logging.debug("Interrupts are disabled")
             elif self.state in [ProcessorState.INT_ENTER, ProcessorState.INT_BODY]:
                 logging.debug("Interrupts inside of interrupts are not supported")
             else:
                 self.is_interrupt_request = True
-                self.data_path.input_buffer = symbol
+                self.data_path.input_buffer.append(value)
 
         if self.is_interrupt_request and self.step == 0 and self.state == ProcessorState.NORMAL:
             self.state = ProcessorState.INT_ENTER

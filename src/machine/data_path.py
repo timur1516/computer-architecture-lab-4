@@ -12,6 +12,7 @@ from src.machine.exceptions.exceptions import (
     ReadingFromOutputAddressError,
     WritingToInputAddressError,
 )
+from src.machine.util import int_list_to_str, int_to_char, int_to_char_or_int
 
 ALU_OPCODE_OPERATORS = {
     Opcode.ADD: lambda left, right: left + right,
@@ -29,8 +30,6 @@ ALU_OPCODE_OPERATORS = {
     Opcode.XOR: lambda left, right: left ^ right,
 }
 "Вспомогательный словарь для хранения lambda-выражение операций alu"
-
-# TODO: Подумать на вводом машинных слова не только символов
 
 
 class DataPath:
@@ -51,10 +50,10 @@ class DataPath:
     output_buffer = None
     "Буфер выходных данных."
 
-    registers_file: dict[Register, int]
+    registers_file = None
     "Основной набор регистров процессора"
 
-    shadow_register_file: dict[Register, int]
+    shadow_register_file = None
     "Дополнительный набор регистров процессора. Нужен для сохранения значений регистров при прерываниях"
 
     zero_flag = None
@@ -75,7 +74,7 @@ class DataPath:
         )
         self.data_address = 0
 
-        self.input_buffer = ""
+        self.input_buffer = []
         self.output_buffer = []
 
         self.registers_file = {r: 0 for r in Register}
@@ -114,9 +113,15 @@ class DataPath:
         if self.data_address == INPUT_ADDRESS:
             raise WritingToInputAddressError()
         if self.data_address == OUTPUT_ADDRESS:
-            symbol = chr(self.registers_file[rs2])
-            logging.debug("output: %s << %s", repr("".join(self.output_buffer)), repr(symbol))
-            self.output_buffer.append(symbol)
+            value = self.registers_file[rs2]
+            logging.debug(
+                'output: "%s" << "%s" | %s << %s',
+                int_list_to_str(self.output_buffer),
+                int_to_char(value),
+                self.output_buffer,
+                value,
+            )
+            self.output_buffer.append(value)
         else:
             self.data_memory[self.data_address] = self.registers_file[rs2]
 
@@ -131,10 +136,10 @@ class DataPath:
         if self.data_address == OUTPUT_ADDRESS:
             raise ReadingFromOutputAddressError()
         if self.data_address == INPUT_ADDRESS:
-            if self.input_buffer == "":
+            if len(self.input_buffer) == 0:
                 raise EmptyInputBufferError()
-            value = ord(self.input_buffer)
-            logging.debug("input: %s", repr(value))
+            value = self.input_buffer.pop()
+            logging.debug("input: %s", int_to_char_or_int(value))
 
         else:
             value = self.data_memory[self.data_address]

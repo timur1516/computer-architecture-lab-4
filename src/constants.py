@@ -8,3 +8,9 @@ MAX_NUMBER = 2 ** (WORD_SIZE - 1) - 1
 
 MIN_NUMBER = -(2 ** (WORD_SIZE - 1))
 "Минимальное допустимое значение машинного слова"
+
+INSTRUCTION_MEMORY_SIZE = 1000
+"Размер памяти инструкций"
+
+INTERRUPTS_HANDLER_ADDRESS = 900
+"Адрес начала блока обработки прерываний."

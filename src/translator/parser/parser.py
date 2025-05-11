@@ -16,7 +16,7 @@ from src.translator.ast_.ast_ import (
     AstWhileStatement,
 )
 from src.translator.exceptions.exceptions import NameIsAlreadyInUseError, UndefinedSymbolError, UnexpectedTokenError
-from src.translator.lexer import Lexer
+from src.translator.lexer.lexer import Lexer
 from src.translator.token.grammar_start_tokens import (
     declaration_start_tokens,
     operation_start_tokens,

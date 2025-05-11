@@ -3,19 +3,19 @@ from __future__ import annotations
 import logging
 import sys
 
+from src.constants import INTERRUPTS_HANDLER_ADDRESS
 from src.isa.instructions.instruction import Instruction
-from src.isa.util.data_translators import from_bytes
+from src.isa.util.data_translators import from_bytes_data, from_bytes_instructions
 from src.machine.control_unit import ControlUnit
 from src.machine.data_path import DataPath
 from src.machine.exceptions.exceptions import SimulationError
+from src.machine.util import int_list_to_str
 
 
 def simulation(
-    code: list[Instruction],
-    input_timetable: list[tuple[int, chr]],
-    init_data_memory: list[int],
-    interrupt_handler_address: int,
-    is_interrupts_enabled: bool,
+    instructions: list[Instruction],
+    data: list[int],
+    input_timetable: dict[int, int],
     data_memory_size: int,
     limit: int,
 ) -> str:
@@ -32,10 +32,10 @@ def simulation(
     - логирование
     """
 
-    assert len(init_data_memory) <= data_memory_size, "memory overflow"
+    assert len(data) <= data_memory_size, "memory overflow"
 
-    data_path = DataPath(data_memory_size, init_data_memory)
-    control_unit = ControlUnit(code, data_path, input_timetable, is_interrupts_enabled, interrupt_handler_address)
+    data_path = DataPath(data_memory_size, data)
+    control_unit = ControlUnit(instructions, data_path, input_timetable, INTERRUPTS_HANDLER_ADDRESS)
 
     logging.debug("%s", control_unit)
     try:
@@ -49,33 +49,40 @@ def simulation(
 
     if control_unit.get_tick() >= limit:
         logging.warning("Limit exceeded!")
-    logging.info("output_buffer: %s", repr("".join(data_path.output_buffer)))
+    logging.info('output_buffer: "%s" | %s', int_list_to_str(data_path.output_buffer), data_path.output_buffer)
 
-    return "".join(data_path.output_buffer)
+    return "output_buffer_str:\n{}\noutput_buffer_num:\n{}".format(
+        int_list_to_str(data_path.output_buffer, True), data_path.output_buffer
+    )
 
 
-def main(code_file: str, input_file: str):
+def main(instructions_file: str, data_file: str, input_timetable_file: str):
     """Функция запуска модели процессора. Параметры -- имена файлов с машинным
     кодом и расписанием прерываний с входными данными для симуляции.
     """
 
-    with open(code_file, "rb") as file:
-        binary_code = file.read()
-    code, data_memory, interrupt_handler_address, is_interrupts_enabled = from_bytes(binary_code)
+    with open(instructions_file, "rb") as file:
+        binary_instructions = file.read()
+    instructions = from_bytes_instructions(binary_instructions)
 
-    input_timetable = []
-    if is_interrupts_enabled:
-        with open(input_file, encoding="utf-8") as f:
-            for line in f:
-                num, char = line.strip().split()
-                input_timetable.append((int(num), char))
+    with open(data_file, "rb") as file:
+        binary_data = file.read()
+    data = from_bytes_data(binary_data)
+
+    input_timetable = {}
+    with open(input_timetable_file, encoding="utf-8") as f:
+        for line in f:
+            num, value = line.strip().split()
+            try:
+                value = int(value)
+            except ValueError:
+                value = ord(value)
+            input_timetable[int(num)] = value
 
     output = simulation(
-        code,
+        instructions,
+        data,
         input_timetable,
-        data_memory,
-        interrupt_handler_address,
-        is_interrupts_enabled,
         data_memory_size=1000,
         limit=10000,
     )
@@ -85,6 +92,6 @@ def main(code_file: str, input_file: str):
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.DEBUG)
-    assert len(sys.argv) == 3, "Wrong arguments: machine.py <code_file> <input_timetable_file>"
-    _, code_file, input_file = sys.argv
-    main(code_file, input_file)
+    assert len(sys.argv) == 4, "Wrong arguments: machine.py <instructions_bin_file> <data_bin_file> <input_file>"
+    _, instructions_bin_file, data_bin_file, input_file = sys.argv
+    main(instructions_bin_file, data_bin_file, input_file)

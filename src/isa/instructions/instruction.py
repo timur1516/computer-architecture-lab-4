@@ -5,7 +5,9 @@ from src.isa.util.binary import extract_bits
 class Instruction:
     """Общий класс инструкции
 
-    Эти инструкции не принимают аргументов, только `opcode`. Например `halt`, `rint`.
+    Эти инструкции не принимают аргументов, только `opcode`. Например: `halt`, `rint`.
+
+    Дополнительно каждая инструкция содержит адрес, который записывается в бинарный файл
 
     Структура инструкции:
 
@@ -19,10 +21,14 @@ class Instruction:
     """
 
     opcode = None
-    "код операции, 7 бит"
+    "Код операции, 7 бит"
 
-    def __init__(self, opcode: Opcode):
+    address = None
+    "Адрес инструкции. B случае если не указывать сразу, инициализируется нулём"
+
+    def __init__(self, opcode: Opcode, address: int = 0):
         self.opcode = opcode
+        self.address = address
 
     def to_binary(self) -> int:
         """Преобразование инструкции в бинарное представление"""
