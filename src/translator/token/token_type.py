@@ -35,6 +35,7 @@ class TokenType(str, Enum):
     DUP = "dup"
     DROP = "drop"
     SWAP = "swap"
+    OVER = "over"
 
     STORE = "store"
     LOAD = "load"

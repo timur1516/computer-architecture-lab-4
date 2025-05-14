@@ -13,3 +13,6 @@ test:
 
 test-update-golden:
 	poetry run pytest . -v --update-goldens
+
+coverage:
+	poetry run coverage run -m pytest . && poetry run coverage report -m

@@ -171,6 +171,12 @@ OPERATION_TRANSLATION = {
         *push_register_instructions_producer(Register.T0),
         *push_register_instructions_producer(Register.T1),
     ],
+    TokenType.OVER: [
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
+        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -2),
+        SInstruction(Opcode.SW, Register.SP, Register.T0),
+    ],
     TokenType.EQUALS: [
         *pop_to_register_instructions_producer(Register.T0),
         *pop_to_register_instructions_producer(Register.T1),

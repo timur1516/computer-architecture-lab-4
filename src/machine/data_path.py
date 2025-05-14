@@ -12,7 +12,7 @@ from src.machine.exceptions.exceptions import (
     ReadingFromOutputAddressError,
     WritingToInputAddressError,
 )
-from src.machine.util import int_list_to_str, int_to_char, int_to_char_or_int
+from src.machine.util import int_list_to_str, int_to_char
 
 ALU_OPCODE_OPERATORS = {
     Opcode.ADD: lambda left, right: left + right,
@@ -139,7 +139,7 @@ class DataPath:
             if len(self.input_buffer) == 0:
                 raise EmptyInputBufferError()
             value = self.input_buffer.pop()
-            logging.debug("input: %s", int_to_char_or_int(value))
+            logging.debug('input: "%s" | %s', int_to_char(value), value)
 
         else:
             value = self.data_memory[self.data_address]

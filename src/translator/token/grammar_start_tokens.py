@@ -17,7 +17,7 @@ logical_operation_start_tokens = [
     TokenType.GREATER_EQUAL,
 ]
 
-stack_operation_start_tokens = [TokenType.DUP, TokenType.DROP, TokenType.SWAP]
+stack_operation_start_tokens = [TokenType.DUP, TokenType.DROP, TokenType.SWAP, TokenType.OVER]
 
 memory_operation_start_tokens = [TokenType.STORE, TokenType.LOAD]
 

@@ -75,7 +75,7 @@ def main(src_file: str, instructions_file: str, data_file: str):
         with open(data_file, "w") as f:
             f.write(json_data)
 
-    print("source LoC:", len(src_file.split("\n")), "code instr:", len(instructions))
+    print("source LoC:", len(src.split("\n")), "code instr:", len(instructions))
 
 
 if __name__ == "__main__":

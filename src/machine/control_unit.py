@@ -14,7 +14,7 @@ from src.isa.instructions.u_instruction import UInstruction
 from src.isa.opcode_ import Opcode
 from src.isa.register import Register
 from src.machine.data_path import DataPath
-from src.machine.util import int_to_char_or_int
+from src.machine.util import int_to_char
 
 
 # TODO: Подумать над необходимостью состояний
@@ -146,7 +146,7 @@ class ControlUnit:
 
         if self._tick in self.input_timetable:
             value = self.input_timetable[self._tick]
-            logging.debug("Interrupt request on tick %s with value %s", self._tick, int_to_char_or_int(value))
+            logging.debug('Interrupt request on tick %s with value "%s" | %s', self._tick, int_to_char(value), value)
             if not self.is_interrupts_enabled:
                 logging.debug("Interrupts are disabled")
             elif self.state in [ProcessorState.INT_ENTER, ProcessorState.INT_BODY]:

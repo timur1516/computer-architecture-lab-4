@@ -84,7 +84,7 @@ def main(instructions_file: str, data_file: str, input_timetable_file: str):
         data,
         input_timetable,
         data_memory_size=1000,
-        limit=10000,
+        limit=20000,
     )
 
     print("".join(output))
