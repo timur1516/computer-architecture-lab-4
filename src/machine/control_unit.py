@@ -235,7 +235,7 @@ class ControlUnit:
                 self.step = 0
                 self.tick()
                 return
-
+            # TODO: Подумать над загрузкой со смещением
             if instr.opcode is Opcode.LW:
                 if self.step == 0:
                     self.data_path.signal_latch_data_address(instr.rs1)

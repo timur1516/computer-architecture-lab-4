@@ -16,9 +16,15 @@ class TokenType(str, Enum):
     MINUS = "-"
     MUL = "*"
     DIV = "/"
+    MOD = "mod"
+    NEG = "neg"
+    ABS = "abs"
 
     D_PLUS = "2+"
     D_MUL = "2*"
+    D_MINUS = "2-"
+    D_NEG = "2neg"
+    D_ABS = "2abs"
 
     AND = "and"
     OR = "or"
@@ -37,8 +43,16 @@ class TokenType(str, Enum):
     SWAP = "swap"
     OVER = "over"
 
+    D_DUP = "2dup"
+    D_DROP = "2drop"
+    D_SWAP = "2swap"
+    D_OVER = "2over"
+
     STORE = "store"
     LOAD = "load"
+
+    D_STORE = "2store"
+    D_LOAD = "2load"
 
     PRINT = "print"
     READ = "read"

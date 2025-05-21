@@ -12,7 +12,7 @@ import src.translator.translator as translator
 MAX_LOG = 4000
 
 
-@pytest.mark.golden_test("golden/*.yml")
+@pytest.mark.golden_test("golden/*.yaml")
 def test_translator_and_machine(golden, caplog):
     caplog.set_level(logging.DEBUG)
 

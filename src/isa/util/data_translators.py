@@ -108,7 +108,7 @@ def from_bytes_data(binary_data: bytes) -> list[int]:
 
 def from_bytes_instructions(binary_instructions: bytes) -> list[Instruction]:
     """Преобразование бинарного представление инструкций в структурированный формат"""
-
+    # TODO: Решить проблему с None
     instructions = [None] * INSTRUCTION_MEMORY_SIZE
     word_list = bytes_to_int_array(binary_instructions)
 
