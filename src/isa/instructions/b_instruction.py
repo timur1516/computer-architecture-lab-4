@@ -72,7 +72,13 @@ class BInstruction(Instruction):
 
     @override
     def to_json(self) -> dict:
-        return {"opcode": str(self.opcode), "rs1": str(self.rs1), "rs2": str(self.rs2), "imm": self.imm}
+        return {
+            "address": self.address,
+            "opcode": str(self.opcode),
+            "rs1": str(self.rs1),
+            "rs2": str(self.rs2),
+            "imm": self.imm,
+        }
 
     def __str__(self) -> str:
         return f"{self.opcode!s} {self.rs1!s}, {self.rs2!s}, {self.imm!s}"

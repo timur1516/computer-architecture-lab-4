@@ -44,7 +44,7 @@ class Instruction:
 
     def to_json(self) -> dict:
         """Преобразование инструкции в json словарь"""
-        return {"opcode": str(self.opcode)}
+        return {"address": self.address, "opcode": str(self.opcode)}
 
     def __str__(self) -> str:
         return str(self.opcode)

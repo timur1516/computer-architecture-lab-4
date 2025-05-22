@@ -3,7 +3,8 @@ from __future__ import annotations
 import logging
 import sys
 
-from src.constants import INTERRUPTS_HANDLER_ADDRESS
+from src.constants import INSTRUCTION_MEMORY_SIZE, INTERRUPTS_HANDLER_ADDRESS
+from src.isa.data import Data
 from src.isa.instructions.instruction import Instruction
 from src.isa.util.data_translators import from_bytes_data, from_bytes_instructions
 from src.machine.control_unit import ControlUnit
@@ -14,7 +15,7 @@ from src.machine.util import int_list_to_str
 
 def simulation(
     instructions: list[Instruction],
-    data: list[int],
+    data: list[Data],
     input_timetable: dict[int, int],
     data_memory_size: int,
     limit: int,
@@ -32,10 +33,12 @@ def simulation(
     - логирование
     """
 
-    assert len(data) <= data_memory_size, "memory overflow"
+    assert len(data) <= data_memory_size, "data memory overflow"
 
     data_path = DataPath(data_memory_size, data)
-    control_unit = ControlUnit(instructions, data_path, input_timetable, INTERRUPTS_HANDLER_ADDRESS)
+    control_unit = ControlUnit(
+        instructions, INSTRUCTION_MEMORY_SIZE, data_path, input_timetable, INTERRUPTS_HANDLER_ADDRESS
+    )
 
     logging.debug("%s", control_unit)
     try:

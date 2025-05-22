@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from src.constants import INSTRUCTION_MEMORY_SIZE, INTERRUPTS_HANDLER_ADDRESS
+from src.isa.data import Data
 from src.isa.instructions.instruction import Instruction
 from src.isa.memory_config import DATA_AREA_START_ADDR
 from src.isa.opcode_ import Opcode
@@ -29,8 +30,6 @@ from src.translator.code_generator.instruction_producers import (
     symbol_instructions_producer,
     while_instructions_producer,
 )
-
-# TODO: Подумать над указанием адреса в данных (не просто всё по порядку)
 
 
 class CodeGenerator(AstNodeVisitor):
@@ -67,28 +66,33 @@ class CodeGenerator(AstNodeVisitor):
         self.tree = tree
         self.symbol_table = symbol_table
         self.literals = literals
-        self.data: list[int] = []
+        self.data: list[Data] = []
         self.instructions: list[Instruction] = []
         self.interrupts: list[Instruction] = []
         self.interrupt_handler_address = 0
         self.is_interrupts_enabled = False
 
     @staticmethod
-    def do_link(instructions: list[Instruction], start_address: int):
-        """Проставляет адреса инструкций
-
-        Принимает массив инструкций и адрес начала данного блока
-        """
+    def do_link_instructions(instructions: list[Instruction], start_address: int, instruction_memory_size: int):
+        """Проставляет адреса инструкций"""
 
         instruction_address = start_address
 
         for i in range(len(instructions)):
-            assert instruction_address < INSTRUCTION_MEMORY_SIZE, "Too many instructions"
+            assert instruction_address < instruction_memory_size, "Too many instructions"
 
             instructions[i].address = instruction_address
             instruction_address += 1
 
-        return instructions
+    @staticmethod
+    def do_link_data(data: list[Data], start_address: int):
+        """Проставляет адреса данных"""
+
+        data_start_address = start_address
+
+        for i in range(len(data)):
+            data[i].address = data_start_address
+            data_start_address += 1
 
     def translate(self) -> list[Instruction]:
         """Основная функция трансляции
@@ -106,8 +110,9 @@ class CodeGenerator(AstNodeVisitor):
 
         assert len(self.instructions) < INTERRUPTS_HANDLER_ADDRESS, "Main instructions overlap interrupts block"
 
-        self.instructions = self.do_link(self.instructions, 0)
-        self.interrupts = self.do_link(self.interrupts, INTERRUPTS_HANDLER_ADDRESS)
+        self.do_link_instructions(self.instructions, 0, INSTRUCTION_MEMORY_SIZE)
+        self.do_link_instructions(self.interrupts, INTERRUPTS_HANDLER_ADDRESS, INSTRUCTION_MEMORY_SIZE)
+        self.do_link_data(self.data, DATA_AREA_START_ADDR)
 
         return self.instructions + self.interrupts
 
@@ -140,9 +145,9 @@ class CodeGenerator(AstNodeVisitor):
     def visit_literal(self, node: AstLiteral) -> list[Instruction]:
         """Загружает значение из массива литералов, и записывает его в `data` в виде паскаль-строки"""
         value = self.literals[node.value_id]
-        self.data.append(len(value))
+        self.data.append(Data(len(value)))
         for c in value:
-            self.data.append(ord(c))
+            self.data.append(Data(ord(c)))
         return []
 
     def visit_variable_declaration(self, node: AstVariableDeclaration) -> list[Instruction]:
@@ -150,7 +155,7 @@ class CodeGenerator(AstNodeVisitor):
 
         address = DATA_AREA_START_ADDR + len(self.data)
         self.symbol_table[node.name] = address
-        self.data.append(0)
+        self.data.append(Data())
         return []
 
     def visit_d_variable_declaration(self, node: AstDVariableDeclaration) -> list[Instruction]:
@@ -158,7 +163,7 @@ class CodeGenerator(AstNodeVisitor):
 
         address = DATA_AREA_START_ADDR + len(self.data)
         self.symbol_table[node.name] = address
-        self.data += [0] * 2
+        self.data += [Data()] * 2
         return []
 
     def visit_string_declaration(self, node: AstStringDeclaration) -> list[Instruction]:
@@ -174,7 +179,7 @@ class CodeGenerator(AstNodeVisitor):
 
         address = DATA_AREA_START_ADDR + len(self.data)
         self.symbol_table[node.name] = address
-        self.data += [0] * node.size
+        self.data += [Data()] * node.size
         return []
 
     def visit_if_statement(self, node: AstIfStatement) -> list[Instruction]:

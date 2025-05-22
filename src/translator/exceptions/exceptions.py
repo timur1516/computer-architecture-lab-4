@@ -53,3 +53,9 @@ class IncludeFileReadingError(TranslationError):
     def __init__(self, include_path: str):
         self.include_path = include_path
         super().__init__(f"Could not read include file {include_path}")
+
+
+class ValueOutOfRangeError(TranslationError):
+    def __init__(self, value: int):
+        self.value = value
+        super().__init__(f"Value {value} is out of range")

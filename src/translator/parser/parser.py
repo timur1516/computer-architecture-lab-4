@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from src.constants import MAX_EXTENDED_NUMBER, MAX_NUMBER, MIN_EXTENDED_NUMBER, MIN_NUMBER
 from src.translator.ast_.ast_ import (
     AstBlock,
     AstDVariableDeclaration,
@@ -15,7 +16,12 @@ from src.translator.ast_.ast_ import (
     AstVariableDeclaration,
     AstWhileStatement,
 )
-from src.translator.exceptions.exceptions import NameIsAlreadyInUseError, UndefinedSymbolError, UnexpectedTokenError
+from src.translator.exceptions.exceptions import (
+    NameIsAlreadyInUseError,
+    UndefinedSymbolError,
+    UnexpectedTokenError,
+    ValueOutOfRangeError,
+)
 from src.translator.lexer.lexer import Lexer
 from src.translator.token.grammar_start_tokens import (
     declaration_start_tokens,
@@ -154,14 +160,16 @@ class Parser:
         token = self.current_token
         self.compare_and_next(TokenType.NUMBER)
         value = int(token.value)
-        # TODO: Добавить проверку корректности значения value на ОДЗ
+        if not (MIN_NUMBER <= value <= MAX_NUMBER):
+            raise ValueOutOfRangeError(value)
         return AstNumber(value)
 
     def extended_number(self) -> AstExtendedNumber:
         token = self.current_token
         self.compare_and_next(TokenType.EXTENDED_NUMBER)
         value = int(token.value)
-        # TODO: Добавить проверку корректности значения value на ОДЗ
+        if not (MIN_EXTENDED_NUMBER <= value <= MAX_EXTENDED_NUMBER):
+            raise ValueOutOfRangeError(value)
         return AstExtendedNumber(value)
 
     def operation(self) -> AstOperation:
@@ -265,7 +273,8 @@ class Parser:
         self.compare_and_next(TokenType.NUMBER)
         size = int(token.value)
 
-        # TODO: Добавить проверку на корректность значения size
+        if size <= 0:
+            raise ValueOutOfRangeError(size)
 
         return AstMemoryBlockDeclaration(name, size)
 

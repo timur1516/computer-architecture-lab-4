@@ -3,3 +3,5 @@
 __pycache__
 /out/
 /.coverage
+/examples/input_timetable.txt
+/examples/main.fs

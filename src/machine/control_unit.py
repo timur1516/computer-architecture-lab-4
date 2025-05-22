@@ -17,6 +17,7 @@ from src.machine.data_path import DataPath
 from src.machine.util import int_to_char
 
 
+# TODO: Выделить память в отдельный модуль?
 # TODO: Подумать над необходимостью состояний
 class ProcessorState(str, Enum):
     """Вспомогательный класс для хранения состояния процессора"""
@@ -34,6 +35,9 @@ class ControlUnit:
     """Блок управления процессора. Выполняет декодирование инструкций и
     управляет состоянием модели процессора, включая обработку данных (DataPath).
     """
+
+    instruction_memory_size = None
+    "Размер памяти инструкций"
 
     instruction_memory = None
     "Память инструкций"
@@ -70,12 +74,17 @@ class ControlUnit:
 
     def __init__(
         self,
-        instruction_memory: list[Instruction],
+        instructions: list[Instruction],
+        instruction_memory_size: int,
         data_path: DataPath,
         input_timetable: dict[int, int],
         interrupt_handler_address: int,
     ):
-        self.instruction_memory = instruction_memory
+        self.instruction_memory_size = instruction_memory_size
+        self.instruction_memory: list[Instruction] = [
+            IInstruction(Opcode.ADDI, Register.ZERO, Register.ZERO, 0)
+        ] * instruction_memory_size
+        self.init_instruction_memory(instructions)
         self.data_path = data_path
         self.input_timetable = input_timetable
         self.interrupt_handler_address = interrupt_handler_address
@@ -87,6 +96,13 @@ class ControlUnit:
         self.is_interrupts_enabled = False
         self.is_interrupt_request = False
         self.pc_interrupt_buffer = 0
+
+    def init_instruction_memory(self, program: list[Instruction]):
+        """Выполняет заполнение размещение программы в памяти инструкций"""
+
+        for instr in program:
+            assert 0 <= instr.address <= self.instruction_memory_size, "instruction memory overflow"
+            self.instruction_memory[instr.address] = instr
 
     def tick(self):
         """Продвинуть модельное время процессора вперёд на один такт."""
@@ -345,7 +361,7 @@ class ControlUnit:
             self.program_counter,
             self.step,
             self.data_path.data_address,
-            self.data_path.data_memory[self.data_path.data_address],
+            self.data_path.data_memory[self.data_path.data_address].value,
             self.data_path.registers_file[Register.T0],
             self.data_path.registers_file[Register.T1],
             self.data_path.registers_file[Register.T2],

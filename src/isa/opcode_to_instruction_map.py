@@ -8,8 +8,6 @@ from src.isa.instructions.s_instruction import SInstruction
 from src.isa.instructions.u_instruction import UInstruction
 from src.isa.opcode_ import Opcode
 
-# TODO: Подумать как упростить
-
 opcode_to_instruction_type = {
     Opcode.LUI: UInstruction,
     Opcode.SW: SInstruction,
@@ -39,5 +37,5 @@ opcode_to_instruction_type = {
 }
 """Вспомогательный словарь для мапинга opcode инструкций на их типы
 
-Из пользуется при считывания инструкций из бинарного файла
+Используется при считывания инструкций из бинарного файла
 """

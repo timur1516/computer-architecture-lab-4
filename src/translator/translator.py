@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import sys
 
+from src.isa.data import Data
 from src.isa.instructions.instruction import Instruction
 from src.isa.util.data_translators import (
     to_bytes_data,
@@ -18,22 +19,22 @@ from src.translator.parser.parser import Parser
 from src.translator.preprocessor.include_preprocessor import IncludePreprocessor
 
 
-def translate(text: str, src_file: str) -> (list[Instruction], list[int], list[int], bool):
+def translate(text: str, src_file: str) -> (list[Instruction], list[Data], list[int], bool):
     """Основная функция трансляции
 
     Выполняет инициализацию препроцессора, лексера, парсера и генератора машинного кода, и их использование
 
     На выходе даёт массив инструкций, блок данных и информацию о прерываниях
     """
-
+    # TODO: Подумать над более логичным выделением потока трансляции
     text = IncludePreprocessor(text, src_file).preprocess()
     lexer = Lexer(text)
     parser = Parser(lexer)
     tree = parser.parse()
-    translator = CodeGenerator(tree, parser.symbol_table, parser.literals)
-    program = translator.translate()
+    code_generator = CodeGenerator(tree, parser.symbol_table, parser.literals)
+    program = code_generator.translate()
 
-    return program, translator.data, translator.interrupt_handler_address, translator.is_interrupts_enabled
+    return program, code_generator.data, code_generator.interrupt_handler_address, code_generator.is_interrupts_enabled
 
 
 def main(src_file: str, instructions_file: str, data_file: str):

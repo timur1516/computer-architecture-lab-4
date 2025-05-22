@@ -46,7 +46,7 @@ class JInstruction(Instruction):
 
     @override
     def to_json(self) -> dict:
-        return {"opcode": str(self.opcode), "imm": self.imm}
+        return {"address": self.address, "opcode": str(self.opcode), "imm": self.imm}
 
     def __str__(self) -> str:
         return f"{self.opcode!s} {self.imm!s}"

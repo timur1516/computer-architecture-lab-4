@@ -54,7 +54,7 @@ class UInstruction(Instruction):
 
     @override
     def to_json(self) -> dict:
-        return {"opcode": str(self.opcode), "rd": str(self.rd), "u_imm": self.u_imm}
+        return {"address": self.address, "opcode": str(self.opcode), "rd": str(self.rd), "u_imm": self.u_imm}
 
     def __str__(self) -> str:
         return f"{self.opcode!s} {self.rd!s}, {self.u_imm!s}"

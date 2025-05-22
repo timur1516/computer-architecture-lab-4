@@ -3,7 +3,8 @@ from __future__ import annotations
 import logging
 
 from src.constants import MAX_NUMBER, MIN_NUMBER, WORD_SIZE
-from src.isa.memory_config import DATA_AREA_START_ADDR, INPUT_ADDRESS, OUTPUT_ADDRESS
+from src.isa.data import Data
+from src.isa.memory_config import INPUT_ADDRESS, OUTPUT_ADDRESS
 from src.isa.opcode_ import Opcode
 from src.isa.register import Register
 from src.isa.util.binary import binary_to_signed_int
@@ -13,6 +14,8 @@ from src.machine.exceptions.exceptions import (
     WritingToInputAddressError,
 )
 from src.machine.util import int_list_to_str, int_to_char
+
+# TODO: Возможно стоит выделить память, алу и IO в отдельные модули
 
 ALU_OPCODE_OPERATORS = {
     Opcode.ADD: lambda left, right: left + right,
@@ -65,13 +68,10 @@ class DataPath:
     overflow_flag = None
     "Флаг переполнения. Инициализируется значением `False`"
 
-    def __init__(self, data_memory_size: int, init_data_memory: list[int]) -> None:
+    def __init__(self, data_memory_size: int, data: list[Data]):
         self.data_memory_size = data_memory_size
-        self.data_memory = (
-            [0] * DATA_AREA_START_ADDR
-            + init_data_memory
-            + [0] * (data_memory_size - len(init_data_memory) - DATA_AREA_START_ADDR)
-        )
+        self.data_memory: list[Data] = [Data()] * data_memory_size
+        self.init_data_memory(data)
         self.data_address = 0
 
         self.input_buffer = []
@@ -85,6 +85,13 @@ class DataPath:
         self.zero_flag = False
         self.negative_flag = False
         self.overflow_flag = False
+
+    def init_data_memory(self, data: list[Data]):
+        """Выполняет заполнение памяти данных входными значениями"""
+
+        for element in data:
+            assert 0 <= element.address <= self.data_memory_size, "data memory overflow"
+            self.data_memory[element.address] = element
 
     def signal_latch_data_address(self, rs1: Register):
         """Защёлкнуть адрес в памяти данных значение из регистра `rs1`"""
@@ -123,7 +130,7 @@ class DataPath:
             )
             self.output_buffer.append(value)
         else:
-            self.data_memory[self.data_address] = self.registers_file[rs2]
+            self.data_memory[self.data_address] = Data(self.registers_file[rs2], self.data_address)
 
     def signal_data_memory_load(self, rd: Register):
         """Чтение значение из памяти в регистр `rd`.
@@ -142,7 +149,7 @@ class DataPath:
             logging.debug('input: "%s" | %s', int_to_char(value), value)
 
         else:
-            value = self.data_memory[self.data_address]
+            value = self.data_memory[self.data_address].value
         self._write_to_reg(rd, value)
 
     def signal_perform_alu_operation_reg(self, rs1: Register, rs2: Register, rd: Register, opcode: Opcode):
