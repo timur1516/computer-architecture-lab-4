@@ -101,7 +101,7 @@ class DataPath:
         assert 0 <= self.data_address < self.data_memory_size, "out of memory: {}".format(self.data_address)
 
     def signal_store_registers(self):
-        """Защёлкнуть резервный блок регистр"""
+        """Защёлкнуть резервный блок регистров"""
 
         self.shadow_register_file = {r: self.registers_file[r] for r in Register if r is not Register.ZERO}
 
@@ -152,46 +152,47 @@ class DataPath:
             value = self.data_memory[self.data_address].value
         self._write_to_reg(rd, value)
 
-    def signal_perform_alu_operation_reg(self, rs1: Register, rs2: Register, rd: Register, opcode: Opcode):
-        """Выполнение операции АЛУ с операндами из регистров"""
+    def signal_perform_alu_operation_reg_reg_reg(self, rs1: Register, rs2: Register, rd: Register, opcode: Opcode):
+        """Выполнение операции АЛУ с операндами из регистров
+
+        Результат записывается в регистр
+        """
 
         result_val = self._perform_alu_operation(self.registers_file[rs1], self.registers_file[rs2], opcode)
         self._write_to_reg(rd, result_val)
 
-    def signal_perform_alu_operation_imm(self, imm: int, rs2: Register, rd: Register, opcode: Opcode):
-        """Выполнение операции АЛУ с операндами из регистра и непосредственного значения"""
+    def signal_perform_alu_operation_imm_reg_reg(self, imm: int, rs2: Register, rd: Register, opcode: Opcode):
+        """Выполнение операции АЛУ с операндами из регистра и непосредственного значения
+
+        Результат записывается в регистр
+        """
 
         result_val = self._perform_alu_operation(imm, self.registers_file[rs2], opcode)
         self._write_to_reg(rd, result_val)
 
-    def signal_perform_alu_operation_u_imm(self, imm: int, rs2: Register, rd: Register, opcode: Opcode):
-        """Выполнение операции АЛУ с операндами из регистра и расширенного непосредственного значения"""
+    def signal_perform_alu_operation_u_imm_reg_reg(self, imm: int, rs2: Register, rd: Register, opcode: Opcode):
+        """Выполнение операции АЛУ с операндами из регистра и расширенного непосредственного значения
 
-        self.signal_perform_alu_operation_imm(imm << 12, rs2, rd, opcode)
+        Результат записывается в регистр
+        """
 
-    def signal_store_pc(self, old_pc: int, rd: Register):
-        """Сохранения значения счётчика команд в регистр
+        self.signal_perform_alu_operation_imm_reg_reg(imm << 12, rs2, rd, opcode)
+
+    def signal_perform_alu_operation_imm_pc_next_pc(self, imm: int, pc: int, opcode: Opcode):
+        """Выполнение операции АЛУ со значением счётчика команд и непосредственного значения
 
         Результат выставляется на шину нового значения счётчика команд
         """
 
-        self._write_to_reg(rd, old_pc)
+        return self._perform_alu_operation(imm, pc, opcode)
 
-    def signal_next_pc_imm(self, pc: int, imm: int) -> int:
-        """Выполнения сложения значения счётчика команд и значения смещения
-
-        Результат выставляется на шину нового значения счётчика команд
-        """
-
-        return self._perform_alu_operation(imm, pc, Opcode.ADD)
-
-    def signal_next_pc_reg(self, imm: int, rs2: Register) -> int:
-        """Выполнения сложения значения из регистра и значения смещения
+    def signal_perform_alu_operation_imm_reg_next_pc(self, imm: int, rs2: Register, opcode: Opcode) -> int:
+        """Выполнение операции АЛУ со значением из регистра и значением смещения
 
         Результат выставляется на шину нового значения счётчика команд
         """
 
-        return self._perform_alu_operation(imm, self.registers_file[rs2], Opcode.ADD)
+        return self._perform_alu_operation(imm, self.registers_file[rs2], opcode)
 
     def _write_to_reg(self, rd: Register, value: int):
         """Вспомогательный внутренний метод для записи значения в регистр

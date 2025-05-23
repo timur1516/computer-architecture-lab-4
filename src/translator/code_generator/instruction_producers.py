@@ -34,7 +34,7 @@ def push_register_instructions_producer(rs: Register) -> list[Instruction]:
 
 
 def push_number_instructions_producer(value) -> list[Instruction]:
-    if is_correct_bin_size_signed(value, 12):
+    if is_correct_bin_size_signed(value, 15):
         return [
             IInstruction(Opcode.ADDI, Register.T0, Register.ZERO, value),
             *push_register_instructions_producer(Register.T0),

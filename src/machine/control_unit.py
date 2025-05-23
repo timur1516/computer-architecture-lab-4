@@ -130,14 +130,14 @@ class ControlUnit:
     def signal_latch_pc_imm(self, imm: int):
         """Защёлкнуть значение счётчика команд, смещённое относительно текущего на значение `imm`"""
 
-        next_pc = self.data_path.signal_next_pc_imm(self.program_counter, imm)
+        next_pc = self.data_path.signal_perform_alu_operation_imm_pc_next_pc(imm, self.program_counter, Opcode.ADD)
         self._signal_latch_pc(next_pc)
 
     def signal_latch_pc_reg(self, rs2: Register, imm: int = 0):
         """Защёлкнуть значение счётчика команд, смещённое относительно
         значения в регистре `rs2` на значение `imm`"""
 
-        next_pc = self.data_path.signal_next_pc_reg(imm, rs2)
+        next_pc = self.data_path.signal_perform_alu_operation_imm_reg_next_pc(imm, rs2, Opcode.ADD)
         self._signal_latch_pc(next_pc)
 
     def signal_latch_pc_buf(self):
@@ -223,7 +223,9 @@ class ControlUnit:
 
         if isinstance(instr, UInstruction):
             if instr.opcode is Opcode.LUI:
-                self.data_path.signal_perform_alu_operation_u_imm(instr.u_imm, Register.ZERO, instr.rd, Opcode.ADD)
+                self.data_path.signal_perform_alu_operation_u_imm_reg_reg(
+                    instr.u_imm, Register.ZERO, instr.rd, Opcode.ADD
+                )
                 self.signal_latch_pc_seq()
                 self.step = 0
                 self.tick()
@@ -246,7 +248,7 @@ class ControlUnit:
 
         if isinstance(instr, IInstruction):
             if instr.opcode is Opcode.ADDI:
-                self.data_path.signal_perform_alu_operation_imm(instr.imm, instr.rs1, instr.rd, Opcode.ADD)
+                self.data_path.signal_perform_alu_operation_imm_reg_reg(instr.imm, instr.rs1, instr.rd, Opcode.ADD)
                 self.signal_latch_pc_seq()
                 self.step = 0
                 self.tick()
@@ -267,7 +269,7 @@ class ControlUnit:
                     return
 
         if isinstance(instr, RInstruction):
-            self.data_path.signal_perform_alu_operation_reg(instr.rs1, instr.rs2, instr.rd, instr.opcode)
+            self.data_path.signal_perform_alu_operation_reg_reg_reg(instr.rs1, instr.rs2, instr.rd, instr.opcode)
             self.signal_latch_pc_seq()
             self.step = 0
             self.tick()
@@ -276,7 +278,9 @@ class ControlUnit:
         if isinstance(instr, BInstruction):
             if instr.opcode is Opcode.BEQ:
                 if self.step == 0:
-                    self.data_path.signal_perform_alu_operation_reg(instr.rs1, instr.rs2, Register.ZERO, Opcode.SUB)
+                    self.data_path.signal_perform_alu_operation_reg_reg_reg(
+                        instr.rs1, instr.rs2, Register.ZERO, Opcode.SUB
+                    )
                     self.step = 1
                     self.tick()
                     return
@@ -292,7 +296,9 @@ class ControlUnit:
 
             if instr.opcode is Opcode.BNE:
                 if self.step == 0:
-                    self.data_path.signal_perform_alu_operation_reg(instr.rs1, instr.rs2, Register.ZERO, Opcode.SUB)
+                    self.data_path.signal_perform_alu_operation_reg_reg_reg(
+                        instr.rs1, instr.rs2, Register.ZERO, Opcode.SUB
+                    )
                     self.step = 1
                     self.tick()
                     return
@@ -308,7 +314,9 @@ class ControlUnit:
 
             if instr.opcode is Opcode.BGT:
                 if self.step == 0:
-                    self.data_path.signal_perform_alu_operation_reg(instr.rs1, instr.rs2, Register.ZERO, Opcode.SUB)
+                    self.data_path.signal_perform_alu_operation_reg_reg_reg(
+                        instr.rs1, instr.rs2, Register.ZERO, Opcode.SUB
+                    )
                     self.step = 1
                     self.tick()
                     return
@@ -324,7 +332,9 @@ class ControlUnit:
 
             if instr.opcode is Opcode.BLT:
                 if self.step == 0:
-                    self.data_path.signal_perform_alu_operation_reg(instr.rs1, instr.rs2, Register.ZERO, Opcode.SUB)
+                    self.data_path.signal_perform_alu_operation_reg_reg_reg(
+                        instr.rs1, instr.rs2, Register.ZERO, Opcode.SUB
+                    )
                     self.step = 1
                     self.tick()
                     return
