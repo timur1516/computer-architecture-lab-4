@@ -4,13 +4,12 @@ from src.isa.instructions.instruction import Instruction
 from src.isa.instructions.j_instruction import JInstruction
 from src.isa.instructions.jr_instruction import JRInstruction
 from src.isa.instructions.r_instruction import RInstruction
-from src.isa.instructions.s_instruction import SInstruction
 from src.isa.instructions.u_instruction import UInstruction
 from src.isa.opcode_ import Opcode
 
 opcode_to_instruction_type = {
     Opcode.LUI: UInstruction,
-    Opcode.SW: SInstruction,
+    Opcode.SW: BInstruction,
     Opcode.LW: IInstruction,
     Opcode.ADDI: IInstruction,
     Opcode.ADD: RInstruction,

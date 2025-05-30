@@ -7,7 +7,6 @@ from src.isa.instructions.i_instruction import IInstruction
 from src.isa.instructions.instruction import Instruction
 from src.isa.instructions.j_instruction import JInstruction
 from src.isa.instructions.r_instruction import RInstruction
-from src.isa.instructions.s_instruction import SInstruction
 from src.isa.instructions.u_instruction import UInstruction
 from src.isa.memory_config import INPUT_ADDRESS, OUTPUT_ADDRESS
 from src.isa.opcode_ import Opcode
@@ -28,7 +27,7 @@ def pop_to_register_instructions_producer(rd: Register) -> list[Instruction]:
 def push_register_instructions_producer(rs: Register) -> list[Instruction]:
     return [
         IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
-        SInstruction(Opcode.SW, Register.SP, rs),
+        BInstruction(Opcode.SW, Register.SP, rs, 0),
     ]
 
 
@@ -80,8 +79,7 @@ def if_instructions_producer(
 def symbol_instructions_producer(symbol_address: int) -> list[Instruction]:
     return [
         IInstruction(Opcode.ADDI, Register.T0, Register.ZERO, symbol_address),
-        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
-        SInstruction(Opcode.SW, Register.SP, Register.T0),
+        *push_register_instructions_producer(Register.T0),
     ]
 
 
@@ -240,16 +238,12 @@ OPERATION_TRANSLATION = {
         *push_register_instructions_producer(Register.T1),
     ],
     TokenType.OVER: [
-        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
-        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
-        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -2),
-        SInstruction(Opcode.SW, Register.SP, Register.T0),
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 1),
+        *push_register_instructions_producer(Register.T0),
     ],
     TokenType.D_DUP: [
         IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
-        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
-        IInstruction(Opcode.LW, Register.T1, Register.SP, 0),
-        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -1),
+        IInstruction(Opcode.LW, Register.T1, Register.SP, 1),
         *push_register_instructions_producer(Register.T1),
         *push_register_instructions_producer(Register.T0),
     ],
@@ -267,10 +261,8 @@ OPERATION_TRANSLATION = {
         *push_register_instructions_producer(Register.T0),
     ],
     TokenType.D_OVER: [
-        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 2),
-        *pop_to_register_instructions_producer(Register.T0),
-        *pop_to_register_instructions_producer(Register.T1),
-        IInstruction(Opcode.ADDI, Register.SP, Register.SP, -4),
+        IInstruction(Opcode.LW, Register.T0, Register.SP, 2),
+        IInstruction(Opcode.LW, Register.T1, Register.SP, 3),
         *push_register_instructions_producer(Register.T1),
         *push_register_instructions_producer(Register.T0),
     ],
@@ -333,7 +325,7 @@ OPERATION_TRANSLATION = {
     TokenType.PRINT: [
         *pop_to_register_instructions_producer(Register.T0),
         IInstruction(Opcode.ADDI, Register.T1, Register.ZERO, OUTPUT_ADDRESS),
-        SInstruction(Opcode.SW, Register.T1, Register.T0),
+        BInstruction(Opcode.SW, Register.T1, Register.T0, 0),
     ],
     TokenType.READ: [
         IInstruction(Opcode.ADDI, Register.T1, Register.ZERO, INPUT_ADDRESS),
@@ -343,7 +335,7 @@ OPERATION_TRANSLATION = {
     TokenType.STORE: [
         *pop_to_register_instructions_producer(Register.T0),
         *pop_to_register_instructions_producer(Register.T1),
-        SInstruction(Opcode.SW, Register.T1, Register.T0),
+        BInstruction(Opcode.SW, Register.T1, Register.T0, 0),
     ],
     TokenType.LOAD: [
         *pop_to_register_instructions_producer(Register.T0),
@@ -354,9 +346,9 @@ OPERATION_TRANSLATION = {
         *pop_to_register_instructions_producer(Register.T0),
         *pop_to_register_instructions_producer(Register.T1),
         *pop_to_register_instructions_producer(Register.T2),
-        SInstruction(Opcode.SW, Register.T2, Register.T0),
+        BInstruction(Opcode.SW, Register.T2, Register.T0, 0),
         IInstruction(Opcode.ADDI, Register.T2, Register.T2, 1),
-        SInstruction(Opcode.SW, Register.T2, Register.T1),
+        BInstruction(Opcode.SW, Register.T2, Register.T1, 0),
     ],
     TokenType.D_LOAD: [
         *pop_to_register_instructions_producer(Register.T2),

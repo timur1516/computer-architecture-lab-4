@@ -9,7 +9,6 @@ from src.isa.instructions.instruction import Instruction
 from src.isa.instructions.j_instruction import JInstruction
 from src.isa.instructions.jr_instruction import JRInstruction
 from src.isa.instructions.r_instruction import RInstruction
-from src.isa.instructions.s_instruction import SInstruction
 from src.isa.instructions.u_instruction import UInstruction
 from src.isa.opcode_ import Opcode
 from src.isa.register import Register
@@ -17,8 +16,6 @@ from src.machine.data_path import DataPath
 from src.machine.util import int_to_char
 
 
-# TODO: Выделить память в отдельный модуль?
-# TODO: Подумать над необходимостью состояний
 class ProcessorState(str, Enum):
     """Вспомогательный класс для хранения состояния процессора"""
 
@@ -130,14 +127,14 @@ class ControlUnit:
     def signal_latch_pc_imm(self, imm: int):
         """Защёлкнуть значение счётчика команд, смещённое относительно текущего на значение `imm`"""
 
-        next_pc = self.data_path.signal_perform_alu_operation_imm_pc_next_pc(imm, self.program_counter, Opcode.ADD)
+        next_pc = self.data_path.signal_perform_alu_operation_pc_imm(self.program_counter, imm, Opcode.ADD)
         self._signal_latch_pc(next_pc)
 
-    def signal_latch_pc_reg(self, rs2: Register, imm: int = 0):
+    def signal_latch_pc_reg(self, rs1: Register, imm: int = 0):
         """Защёлкнуть значение счётчика команд, смещённое относительно
-        значения в регистре `rs2` на значение `imm`"""
+        значения в регистре `rs1` на значение `imm`"""
 
-        next_pc = self.data_path.signal_perform_alu_operation_imm_reg_next_pc(imm, rs2, Opcode.ADD)
+        next_pc = self.data_path.signal_perform_alu_operation_reg_imm(rs1, imm, Opcode.ADD)
         self._signal_latch_pc(next_pc)
 
     def signal_latch_pc_buf(self):
@@ -223,53 +220,40 @@ class ControlUnit:
 
         if isinstance(instr, UInstruction):
             if instr.opcode is Opcode.LUI:
-                self.data_path.signal_perform_alu_operation_u_imm_reg_reg(
-                    instr.u_imm, Register.ZERO, instr.rd, Opcode.ADD
-                )
+                alu_out = self.data_path.signal_perform_alu_operation_reg_u_imm(Register.ZERO, instr.u_imm, Opcode.ADD)
+                self.data_path.signal_write_to_reg(instr.rd, alu_out)
                 self.signal_latch_pc_seq()
                 self.step = 0
                 self.tick()
                 return
-
-        if isinstance(instr, SInstruction):
-            if instr.opcode is Opcode.SW:
-                if self.step == 0:
-                    self.data_path.signal_latch_data_address(instr.rs1)
-                    self.step = 1
-                    self.tick()
-                    return
-
-                if self.step == 1:
-                    self.data_path.signal_data_memory_store(instr.rs2)
-                    self.signal_latch_pc_seq()
-                    self.step = 0
-                    self.tick()
-                    return
 
         if isinstance(instr, IInstruction):
             if instr.opcode is Opcode.ADDI:
-                self.data_path.signal_perform_alu_operation_imm_reg_reg(instr.imm, instr.rs1, instr.rd, Opcode.ADD)
+                alu_out = self.data_path.signal_perform_alu_operation_reg_imm(instr.rs1, instr.imm, Opcode.ADD)
+                self.data_path.signal_write_to_reg(instr.rd, alu_out)
                 self.signal_latch_pc_seq()
                 self.step = 0
                 self.tick()
                 return
-            # TODO: Подумать над загрузкой со смещением
             if instr.opcode is Opcode.LW:
                 if self.step == 0:
-                    self.data_path.signal_latch_data_address(instr.rs1)
+                    alu_out = self.data_path.signal_perform_alu_operation_reg_imm(instr.rs1, instr.imm, Opcode.ADD)
+                    self.data_path.signal_latch_data_address(alu_out)
                     self.step = 1
                     self.tick()
                     return
 
                 if self.step == 1:
-                    self.data_path.signal_data_memory_load(instr.rd)
+                    data_out = self.data_path.signal_data_memory_load()
+                    self.data_path.signal_write_to_reg(instr.rd, data_out)
                     self.signal_latch_pc_seq()
                     self.step = 0
                     self.tick()
                     return
 
         if isinstance(instr, RInstruction):
-            self.data_path.signal_perform_alu_operation_reg_reg_reg(instr.rs1, instr.rs2, instr.rd, instr.opcode)
+            alu_out = self.data_path.signal_perform_alu_operation_reg_reg(instr.rs1, instr.rs2, instr.opcode)
+            self.data_path.signal_write_to_reg(instr.rd, alu_out)
             self.signal_latch_pc_seq()
             self.step = 0
             self.tick()
@@ -278,9 +262,7 @@ class ControlUnit:
         if isinstance(instr, BInstruction):
             if instr.opcode is Opcode.BEQ:
                 if self.step == 0:
-                    self.data_path.signal_perform_alu_operation_reg_reg_reg(
-                        instr.rs1, instr.rs2, Register.ZERO, Opcode.SUB
-                    )
+                    self.data_path.signal_perform_alu_operation_reg_reg(instr.rs1, instr.rs2, Opcode.SUB)
                     self.step = 1
                     self.tick()
                     return
@@ -296,9 +278,7 @@ class ControlUnit:
 
             if instr.opcode is Opcode.BNE:
                 if self.step == 0:
-                    self.data_path.signal_perform_alu_operation_reg_reg_reg(
-                        instr.rs1, instr.rs2, Register.ZERO, Opcode.SUB
-                    )
+                    self.data_path.signal_perform_alu_operation_reg_reg(instr.rs1, instr.rs2, Opcode.SUB)
                     self.step = 1
                     self.tick()
                     return
@@ -314,9 +294,7 @@ class ControlUnit:
 
             if instr.opcode is Opcode.BGT:
                 if self.step == 0:
-                    self.data_path.signal_perform_alu_operation_reg_reg_reg(
-                        instr.rs1, instr.rs2, Register.ZERO, Opcode.SUB
-                    )
+                    self.data_path.signal_perform_alu_operation_reg_reg(instr.rs1, instr.rs2, Opcode.SUB)
                     self.step = 1
                     self.tick()
                     return
@@ -332,9 +310,7 @@ class ControlUnit:
 
             if instr.opcode is Opcode.BLT:
                 if self.step == 0:
-                    self.data_path.signal_perform_alu_operation_reg_reg_reg(
-                        instr.rs1, instr.rs2, Register.ZERO, Opcode.SUB
-                    )
+                    self.data_path.signal_perform_alu_operation_reg_reg(instr.rs1, instr.rs2, Opcode.SUB)
                     self.step = 1
                     self.tick()
                     return
@@ -344,6 +320,22 @@ class ControlUnit:
                         self.signal_latch_pc_imm(instr.imm)
                     else:
                         self.signal_latch_pc_seq()
+                    self.step = 0
+                    self.tick()
+                    return
+
+            if instr.opcode is Opcode.SW:
+                if self.step == 0:
+                    alu_out = self.data_path.signal_perform_alu_operation_reg_imm(instr.rs1, instr.imm, Opcode.ADD)
+                    self.data_path.signal_latch_data_address(alu_out)
+                    self.step = 1
+                    self.tick()
+                    return
+
+                if self.step == 1:
+                    alu_out = self.data_path.signal_perform_alu_operation_reg_reg(Register.ZERO, instr.rs2, Opcode.ADD)
+                    self.data_path.signal_data_memory_store(alu_out)
+                    self.signal_latch_pc_seq()
                     self.step = 0
                     self.tick()
                     return

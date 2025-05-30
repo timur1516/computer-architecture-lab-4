@@ -25,8 +25,6 @@ class AstNodeVisitor:
         Принимает абстрактную вершину и в зависимости от её типа выбирает метод обработчик
         """
 
-        # TODO: Возможно заменить на синтаксический сахар
-
         if isinstance(node, AstOperation):
             return self.visit_operation(node)
         if isinstance(node, AstNumber):

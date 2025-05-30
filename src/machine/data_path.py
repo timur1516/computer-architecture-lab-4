@@ -15,8 +15,6 @@ from src.machine.exceptions.exceptions import (
 )
 from src.machine.util import int_list_to_str, int_to_char
 
-# TODO: Возможно стоит выделить память, алу и IO в отдельные модули
-
 ALU_OPCODE_OPERATORS = {
     Opcode.ADD: lambda left, right: left + right,
     Opcode.ADC: lambda left, right: (((left & ((1 << WORD_SIZE) - 1)) + (right & ((1 << WORD_SIZE) - 1))) >> WORD_SIZE)
@@ -93,12 +91,12 @@ class DataPath:
             assert 0 <= element.address <= self.data_memory_size, "data memory overflow"
             self.data_memory[element.address] = element
 
-    def signal_latch_data_address(self, rs1: Register):
-        """Защёлкнуть адрес в памяти данных значение из регистра `rs1`"""
+    def signal_latch_data_address(self, address: int):
+        """Защёлкнуть адрес в памяти данных"""
 
-        self.data_address = self.registers_file[rs1]
+        assert 0 <= address < self.data_memory_size, "out of memory: {}".format(address)
 
-        assert 0 <= self.data_address < self.data_memory_size, "out of memory: {}".format(self.data_address)
+        self.data_address = address
 
     def signal_store_registers(self):
         """Защёлкнуть резервный блок регистров"""
@@ -109,8 +107,8 @@ class DataPath:
         """Защёлкнуть основной блок регистров"""
         self.registers_file.update(self.shadow_register_file)
 
-    def signal_data_memory_store(self, rs2: Register):
-        """Записать значение из регистра `rs2` в память.
+    def signal_data_memory_store(self, data_in: int):
+        """Записать значение `data_in` в память.
 
         Адрес должен быть предварительно задан в `data_address`
 
@@ -120,20 +118,19 @@ class DataPath:
         if self.data_address == INPUT_ADDRESS:
             raise WritingToInputAddressError()
         if self.data_address == OUTPUT_ADDRESS:
-            value = self.registers_file[rs2]
             logging.debug(
                 'output: "%s" << "%s" | %s << %s',
                 int_list_to_str(self.output_buffer),
-                int_to_char(value),
+                int_to_char(data_in),
                 self.output_buffer,
-                value,
+                data_in,
             )
-            self.output_buffer.append(value)
+            self.output_buffer.append(data_in)
         else:
-            self.data_memory[self.data_address] = Data(self.registers_file[rs2], self.data_address)
+            self.data_memory[self.data_address] = Data(data_in, self.data_address)
 
-    def signal_data_memory_load(self, rd: Register):
-        """Чтение значение из памяти в регистр `rd`.
+    def signal_data_memory_load(self) -> int:
+        """Чтение значение из памяти.
 
         Адрес должен быть предварительно задан в `data_address`
 
@@ -145,59 +142,37 @@ class DataPath:
         if self.data_address == INPUT_ADDRESS:
             if len(self.input_buffer) == 0:
                 raise EmptyInputBufferError()
-            value = self.input_buffer.pop()
-            logging.debug('input: "%s" | %s', int_to_char(value), value)
+            data_out = self.input_buffer.pop()
+            logging.debug('input: "%s" | %s', int_to_char(data_out), data_out)
 
         else:
-            value = self.data_memory[self.data_address].value
-        self._write_to_reg(rd, value)
+            data_out = self.data_memory[self.data_address].value
+        return data_out
 
-    def signal_perform_alu_operation_reg_reg_reg(self, rs1: Register, rs2: Register, rd: Register, opcode: Opcode):
-        """Выполнение операции АЛУ с операндами из регистров
+    def signal_perform_alu_operation_reg_reg(self, rs1: Register, rs2: Register, opcode: Opcode):
+        """Выполнение операции АЛУ с операндами из регистров"""
 
-        Результат записывается в регистр
-        """
+        return self._perform_alu_operation(self.registers_file[rs1], self.registers_file[rs2], opcode)
 
-        result_val = self._perform_alu_operation(self.registers_file[rs1], self.registers_file[rs2], opcode)
-        self._write_to_reg(rd, result_val)
+    def signal_perform_alu_operation_reg_imm(self, rs1: Register, imm: int, opcode: Opcode):
+        """Выполнение операции АЛУ с операндами из регистра и непосредственного значения"""
 
-    def signal_perform_alu_operation_imm_reg_reg(self, imm: int, rs2: Register, rd: Register, opcode: Opcode):
-        """Выполнение операции АЛУ с операндами из регистра и непосредственного значения
+        return self._perform_alu_operation(self.registers_file[rs1], imm, opcode)
 
-        Результат записывается в регистр
-        """
+    def signal_perform_alu_operation_reg_u_imm(self, rs1: Register, imm: int, opcode: Opcode):
+        """Выполнение операции АЛУ с операндами из регистра и расширенного непосредственного значения"""
 
-        result_val = self._perform_alu_operation(imm, self.registers_file[rs2], opcode)
-        self._write_to_reg(rd, result_val)
+        return self._perform_alu_operation(self.registers_file[rs1], imm << 12, opcode)
 
-    def signal_perform_alu_operation_u_imm_reg_reg(self, imm: int, rs2: Register, rd: Register, opcode: Opcode):
-        """Выполнение операции АЛУ с операндами из регистра и расширенного непосредственного значения
+    def signal_perform_alu_operation_pc_imm(self, pc: int, imm: int, opcode: Opcode):
+        """Выполнение операции АЛУ со значением счётчика команд и непосредственного значения"""
 
-        Результат записывается в регистр
-        """
+        return self._perform_alu_operation(pc, imm, opcode)
 
-        self.signal_perform_alu_operation_imm_reg_reg(imm << 12, rs2, rd, opcode)
+    def signal_write_to_reg(self, rd: Register, value: int):
+        """Метод для записи значения в регистр
 
-    def signal_perform_alu_operation_imm_pc_next_pc(self, imm: int, pc: int, opcode: Opcode):
-        """Выполнение операции АЛУ со значением счётчика команд и непосредственного значения
-
-        Результат выставляется на шину нового значения счётчика команд
-        """
-
-        return self._perform_alu_operation(imm, pc, opcode)
-
-    def signal_perform_alu_operation_imm_reg_next_pc(self, imm: int, rs2: Register, opcode: Opcode) -> int:
-        """Выполнение операции АЛУ со значением из регистра и значением смещения
-
-        Результат выставляется на шину нового значения счётчика команд
-        """
-
-        return self._perform_alu_operation(imm, self.registers_file[rs2], opcode)
-
-    def _write_to_reg(self, rd: Register, value: int):
-        """Вспомогательный внутренний метод для записи значения в регистр
-
-        Нужен для того чтобы не дублировать код обработки записи в регистр ZERO
+        Если запись происходит в регистр `ZERO`, то его значение не изменяется
         """
 
         if rd is not Register.ZERO:
