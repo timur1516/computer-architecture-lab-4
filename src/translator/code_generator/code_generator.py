@@ -94,7 +94,7 @@ class CodeGenerator(AstNodeVisitor):
             data[i].address = data_start_address
             data_start_address += 1
 
-    def translate(self) -> list[Instruction]:
+    def translate(self) -> (list[Instruction], list[Data]):
         """Основная функция трансляции
 
         Выполняет следующие операции:
@@ -114,7 +114,7 @@ class CodeGenerator(AstNodeVisitor):
         self.do_link_instructions(self.interrupts, INTERRUPTS_HANDLER_ADDRESS, INSTRUCTION_MEMORY_SIZE)
         self.do_link_data(self.data, DATA_AREA_START_ADDR)
 
-        return self.instructions + self.interrupts
+        return self.instructions + self.interrupts, self.data
 
     def visit_operation(self, node: AstOperation) -> list[Instruction]:
         return operation_instructions_producer(node.token_type)

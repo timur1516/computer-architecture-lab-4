@@ -91,10 +91,10 @@ class Parser:
 
         self.current_token = self.lexer.get_next_token()
 
-    def parse(self) -> AstBlock:
+    def parse(self) -> (AstBlock, dict[str, int], list[str]):
         """Входная точка парсинга"""
 
-        return self.program()
+        return self.program(), self.symbol_table, self.literals
 
     def program(self) -> AstBlock:
         program = self.term()

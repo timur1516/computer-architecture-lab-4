@@ -19,22 +19,21 @@ from src.translator.parser.parser import Parser
 from src.translator.preprocessor.include_preprocessor import IncludePreprocessor
 
 
-def translate(text: str, src_file: str) -> (list[Instruction], list[Data], list[int], bool):
+def translate(text: str, src_file: str) -> (list[Instruction], list[Data]):
     """Основная функция трансляции
 
     Выполняет инициализацию препроцессора, лексера, парсера и генератора машинного кода, и их использование
 
     На выходе даёт массив инструкций, блок данных и информацию о прерываниях
     """
-    # TODO: Подумать над более логичным выделением потока трансляции
     text = IncludePreprocessor(text, src_file).preprocess()
     lexer = Lexer(text)
     parser = Parser(lexer)
-    tree = parser.parse()
-    code_generator = CodeGenerator(tree, parser.symbol_table, parser.literals)
-    program = code_generator.translate()
+    tree, symbol_table, literals = parser.parse()
+    code_generator = CodeGenerator(tree, symbol_table, literals)
+    program, data = code_generator.translate()
 
-    return program, code_generator.data, code_generator.interrupt_handler_address, code_generator.is_interrupts_enabled
+    return program, data
 
 
 def main(src_file: str, instructions_file: str, data_file: str):
@@ -43,7 +42,7 @@ def main(src_file: str, instructions_file: str, data_file: str):
     with open(src_file, encoding="utf-8") as f:
         src = f.read()
 
-    instructions, data, interrupt_handler_address, is_interrupts_enabled = translate(src, src_file)
+    instructions, data = translate(src, src_file)
 
     binary_instructions = to_bytes_instructions(instructions)
     binary_data = to_bytes_data(data)
