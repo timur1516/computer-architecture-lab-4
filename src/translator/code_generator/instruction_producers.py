@@ -6,15 +6,15 @@ from src.isa.instructions.b_instruction import BInstruction
 from src.isa.instructions.i_instruction import IInstruction
 from src.isa.instructions.instruction import Instruction
 from src.isa.instructions.j_instruction import JInstruction
+from src.isa.instructions.jr_instruction import JRInstruction
 from src.isa.instructions.r_instruction import RInstruction
 from src.isa.instructions.u_instruction import UInstruction
 from src.isa.memory_config import INPUT_ADDRESS, OUTPUT_ADDRESS
 from src.isa.opcode_ import Opcode
 from src.isa.register import Register
 from src.isa.util.binary import binary_to_signed_int, is_correct_bin_size_signed
+from src.translator.code_generator.stubs import BranchStub, JumpStub, LabelStub
 from src.translator.token.token_type import TokenType
-
-# TODO: Добавить обработку "длинных переходов с использованием JR"
 
 
 def pop_to_register_instructions_producer(rd: Register) -> list[Instruction]:
@@ -56,23 +56,68 @@ def push_extended_number_instructions_producer(value) -> list[Instruction]:
 
 
 def while_instructions_producer(while_block_instructions: list[Instruction]) -> list[Instruction]:
+    label = LabelStub()
     return [
+        label,
         *while_block_instructions,
         *pop_to_register_instructions_producer(Register.T0),
-        BInstruction(Opcode.BNE, Register.T0, Register.ZERO, -len(while_block_instructions) - 2),
+        BranchStub(Opcode.BNE, Register.T0, Register.ZERO, label),
     ]
 
 
 def if_instructions_producer(
     if_block_instructions: list[Instruction], else_block_instructions: list[Instruction]
 ) -> list[Instruction]:
+    else_label = LabelStub()
+    if_label = LabelStub()
     return [
-        IInstruction(Opcode.LW, Register.T0, Register.SP, 0),
-        IInstruction(Opcode.ADDI, Register.SP, Register.SP, 1),
-        BInstruction(Opcode.BEQ, Register.T0, Register.ZERO, len(if_block_instructions) + 2),
+        *pop_to_register_instructions_producer(Register.T0),
+        BranchStub(Opcode.BEQ, Register.T0, Register.ZERO, else_label),
         *if_block_instructions,
-        JInstruction(Opcode.J, len(else_block_instructions) + 1),
+        JumpStub(if_label),
+        else_label,
         *else_block_instructions,
+        if_label,
+    ]
+
+
+def label_stub_instructions_producer(stub: LabelStub) -> list[Instruction]:
+    return []
+
+
+def branch_stub_instructions_producer(stub: BranchStub) -> list[Instruction]:
+    label_address = stub.label.address
+    offset = label_address - stub.address
+    if is_correct_bin_size_signed(offset, 15):
+        return [BInstruction(stub.opcode, stub.rs1, stub.rs2, offset)]
+    if is_correct_bin_size_signed(offset - 2, 25):
+        return [
+            BInstruction(stub.opcode, stub.rs1, stub.rs2, 2),
+            JInstruction(Opcode.J, 2),
+            JInstruction(Opcode.J, offset - 2),
+        ]
+    lower_value = binary_to_signed_int(label_address, 12)
+    upper_value = binary_to_signed_int(((label_address - lower_value) >> 12), 20)
+    return [
+        BInstruction(stub.opcode, stub.rs1, stub.rs2, 2),
+        JInstruction(Opcode.J, 4),
+        UInstruction(Opcode.LUI, Register.T0, upper_value),
+        IInstruction(Opcode.ADDI, Register.T0, Register.T0, lower_value),
+        JRInstruction(Opcode.JR, 0, Register.T0),
+    ]
+
+
+def jump_stub_instructions_producer(stub: JumpStub) -> list[Instruction]:
+    label_address = stub.label.address
+    offset = label_address - stub.address
+    if is_correct_bin_size_signed(offset, 25):
+        return [JInstruction(Opcode.J, offset)]
+    lower_value = binary_to_signed_int(label_address, 12)
+    upper_value = binary_to_signed_int(((label_address - lower_value) >> 12), 20)
+    return [
+        UInstruction(Opcode.LUI, Register.T0, upper_value),
+        IInstruction(Opcode.ADDI, Register.T0, Register.T0, lower_value),
+        JRInstruction(Opcode.JR, 0, Register.T0),
     ]
 
 

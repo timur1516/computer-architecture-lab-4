@@ -23,13 +23,17 @@ from src.translator.ast_.ast_ import (
 )
 from src.translator.ast_.ast_node_visitor import AstNodeVisitor
 from src.translator.code_generator.instruction_producers import (
+    branch_stub_instructions_producer,
     if_instructions_producer,
+    jump_stub_instructions_producer,
+    label_stub_instructions_producer,
     operation_instructions_producer,
     push_extended_number_instructions_producer,
     push_number_instructions_producer,
     symbol_instructions_producer,
     while_instructions_producer,
 )
+from src.translator.code_generator.stubs import BranchStub, JumpStub, LabelStub, Stub
 
 
 class CodeGenerator(AstNodeVisitor):
@@ -69,27 +73,70 @@ class CodeGenerator(AstNodeVisitor):
         self.data: list[Data] = []
         self.instructions: list[Instruction] = []
         self.interrupts: list[Instruction] = []
-        self.interrupt_handler_address = 0
-        self.is_interrupts_enabled = False
 
     @staticmethod
-    def do_link_instructions(instructions: list[Instruction], start_address: int, instruction_memory_size: int):
+    def link_instructions(instructions: list[Instruction], start_address: int):
         """Проставляет адреса инструкций"""
 
         instruction_address = start_address
-
-        for i in range(len(instructions)):
-            assert instruction_address < instruction_memory_size, "Too many instructions"
-
-            instructions[i].address = instruction_address
-            instruction_address += 1
+        for instr in instructions:
+            instr.address = instruction_address
+            if not isinstance(instr, LabelStub):
+                instruction_address += 1
 
     @staticmethod
-    def do_link_data(data: list[Data], start_address: int):
+    def shift_instructions(shift: int, instructions: list[Instruction]):
+        """Выполняет сдвиг адресов инструкций на определенное значение `shift`"""
+
+        for instr in instructions:
+            instr.address += shift
+
+    def resolve_branches(self, instructions: list[Instruction]) -> list[Instruction]:
+        """Разрешает переходы, удаляя заглушки меток и заменяя заглушки переходов на реальные инструкции
+
+        В начале происходит вычисление итогового размера каждого перехода, что сопровождается сдвигом адресов инструкций
+
+        После чего происходит сама замена заглушек на блоки инструкций
+        """
+
+        is_shift_finished = False
+        while not is_shift_finished:
+            is_shift_finished = True
+            for i, instr in enumerate(instructions):
+                if isinstance(instr, Stub):
+                    replace = self.get_stub_replace(instr)
+                    if instr.size != len(replace):
+                        is_shift_finished = False
+                        self.shift_instructions(len(replace) - instr.size, instructions[i + 1 :])
+                        instr.size = len(replace)
+                        break
+
+        result = []
+        for i, instr in enumerate(instructions):
+            if isinstance(instr, Stub):
+                replace = self.get_stub_replace(instr)
+                self.link_instructions(replace, instr.address)
+                result += replace
+            else:
+                result.append(instr)
+
+        return result
+
+    @staticmethod
+    def get_stub_replace(stub) -> list[Instruction]:
+        if isinstance(stub, LabelStub):
+            return label_stub_instructions_producer(stub)
+        if isinstance(stub, BranchStub):
+            return branch_stub_instructions_producer(stub)
+        if isinstance(stub, JumpStub):
+            return jump_stub_instructions_producer(stub)
+        raise NotImplementedError()
+
+    @staticmethod
+    def link_data(data: list[Data], start_address: int):
         """Проставляет адреса данных"""
 
         data_start_address = start_address
-
         for i in range(len(data)):
             data[i].address = data_start_address
             data_start_address += 1
@@ -103,18 +150,30 @@ class CodeGenerator(AstNodeVisitor):
 
         - Если в программе был блок обработки прерываний то устанавливается флаг наличия прерываний,
           записывается адрес обработчика прерываний и блок обработчика дописывается в основного конец массива инструкций
+
+        - Далее выполняется простановка адресов инструкций и данных
+
+        - После чего выполняется заменя заглушек инструкций переходов
         """
 
         self.instructions = self.visit(self.tree)
         self.instructions.append(Instruction(Opcode.HALT))
 
-        assert len(self.instructions) < INTERRUPTS_HANDLER_ADDRESS, "Main instructions overlap interrupts block"
+        self.link_instructions(self.instructions, 0)
+        self.instructions = self.resolve_branches(self.instructions)
+        assert (
+            max([instr.address for instr in self.instructions]) < INTERRUPTS_HANDLER_ADDRESS
+        ), "Main instructions overlap interrupts block"
 
-        self.do_link_instructions(self.instructions, 0, INSTRUCTION_MEMORY_SIZE)
-        self.do_link_instructions(self.interrupts, INTERRUPTS_HANDLER_ADDRESS, INSTRUCTION_MEMORY_SIZE)
-        self.do_link_data(self.data, DATA_AREA_START_ADDR)
+        self.link_instructions(self.interrupts, INTERRUPTS_HANDLER_ADDRESS)
+        self.interrupts = self.resolve_branches(self.interrupts)
 
-        return self.instructions + self.interrupts, self.data
+        self.link_data(self.data, DATA_AREA_START_ADDR)
+
+        program = self.instructions + self.interrupts
+        assert max([instr.address for instr in program]) < INSTRUCTION_MEMORY_SIZE, "Too many instructions"
+
+        return program, self.data
 
     def visit_operation(self, node: AstOperation) -> list[Instruction]:
         return operation_instructions_producer(node.token_type)
