@@ -22,7 +22,6 @@ class ProcessorState(str, Enum):
     NORMAL = "NORMAL"
     INT_ENTER = "INT_ENTER"
     INT_BODY = "INT_BODY"
-    INT_EXIT = "INT_EXIT"
 
     def __str__(self):
         return self.value
@@ -187,21 +186,17 @@ class ControlUnit:
                 self.tick()
                 return
 
-        if self.state is ProcessorState.INT_EXIT:
-            self.data_path.signal_restore_registers()
-            self.signal_latch_pc_buf()
-            self.step = 0
-            self.state = ProcessorState.NORMAL
-            self.tick()
-            return
-
         instr = self.instruction_memory[self.program_counter]
 
         if instr.opcode is Opcode.HALT:
             raise StopIteration()
 
         if instr.opcode is Opcode.RINT:
-            self.state = ProcessorState.INT_EXIT
+            self.data_path.signal_restore_registers()
+            self.signal_latch_pc_buf()
+            self.step = 0
+            self.state = ProcessorState.NORMAL
+            self.tick()
             return
 
         if instr.opcode is Opcode.EINT:
