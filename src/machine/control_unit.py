@@ -32,6 +32,9 @@ class ControlUnit:
     управляет состоянием модели процессора, включая обработку данных (DataPath).
     """
 
+    states = None
+    "Массив состояний процессора, в том порядке в котором они изменяются"
+
     instruction_memory_size = None
     "Размер памяти инструкций"
 
@@ -54,7 +57,7 @@ class ControlUnit:
     "Номер шага для выполнения много тактовых инструкций"
 
     state = None
-    "Текущее состояние процессора"
+    "Текущее состояние процессора. Соответствует индексу в массиве состояний"
 
     is_interrupt_request = None
     "Флаг наличия запроса прерывания"
@@ -88,10 +91,11 @@ class ControlUnit:
         self.program_counter = 0
         self._tick = 0
         self.step = 0
-        self.state = ProcessorState.NORMAL
+        self.state = 0
         self.is_interrupts_enabled = False
         self.is_interrupt_request = False
         self.pc_interrupt_buffer = 0
+        self.states = [ProcessorState.NORMAL, ProcessorState.INT_ENTER, ProcessorState.INT_BODY]
 
     def init_instruction_memory(self, program: list[Instruction]):
         """Выполняет заполнение размещение программы в памяти инструкций"""
@@ -153,6 +157,26 @@ class ControlUnit:
 
         self.pc_interrupt_buffer = self.program_counter
 
+    def signal_rem_int_rq(self):
+        """Сброс флага запроса прерывания"""
+
+        self.is_interrupt_request = False
+
+    def signal_set_int_en(self):
+        """Установка флага разрешения прерываний"""
+
+        self.is_interrupts_enabled = True
+
+    def signal_rem_int_en(self):
+        """Сброс флага разрешения прерываний"""
+
+        self.is_interrupts_enabled = False
+
+    def signal_shift_state(self):
+        """Переключение состояния процессора"""
+
+        self.state = (self.state + 1) % len(self.states)
+
     def process_next_tick(self):  # noqa: C901 # код хорошо структурирован, по этому не проблема.
         """Основной цикл процессора. Декодирует и выполняет инструкцию."""
 
@@ -161,17 +185,20 @@ class ControlUnit:
             logging.debug('Interrupt request on tick %s with value "%s" | %s', self._tick, int_to_char(value), value)
             if not self.is_interrupts_enabled:
                 logging.debug("Interrupts are disabled")
-            elif self.state in [ProcessorState.INT_ENTER, ProcessorState.INT_BODY]:
+            elif self.states[self.state] in [ProcessorState.INT_ENTER, ProcessorState.INT_BODY]:
                 logging.debug("Interrupts inside of interrupts are not supported")
             else:
                 self.is_interrupt_request = True
                 self.data_path.input_buffer.append(value)
 
-        if self.is_interrupt_request and self.step == 0 and self.state == ProcessorState.NORMAL:
-            self.state = ProcessorState.INT_ENTER
-            self.is_interrupt_request = False
+        if self.is_interrupt_request and self.step == 0 and self.states[self.state] == ProcessorState.NORMAL:
+            self.signal_shift_state()
+            self.signal_rem_int_rq()
+            self.step = 0
+            self.tick()
+            return
 
-        if self.state is ProcessorState.INT_ENTER:
+        if self.states[self.state] is ProcessorState.INT_ENTER:
             if self.step == 0:
                 self.data_path.signal_store_registers()
                 self.signal_latch_pc_interrupt_buffer()
@@ -181,8 +208,8 @@ class ControlUnit:
 
             if self.step == 1:
                 self.signal_latch_pc_interrupt()
+                self.signal_shift_state()
                 self.step = 0
-                self.state = ProcessorState.INT_BODY
                 self.tick()
                 return
 
@@ -194,20 +221,20 @@ class ControlUnit:
         if instr.opcode is Opcode.RINT:
             self.data_path.signal_restore_registers()
             self.signal_latch_pc_buf()
+            self.signal_shift_state()
             self.step = 0
-            self.state = ProcessorState.NORMAL
             self.tick()
             return
 
         if instr.opcode is Opcode.EINT:
-            self.is_interrupts_enabled = True
+            self.signal_set_int_en()
             self.signal_latch_pc_seq()
             self.step = 0
             self.tick()
             return
 
         if instr.opcode is Opcode.DINT:
-            self.is_interrupts_enabled = False
+            self.signal_rem_int_en()
             self.signal_latch_pc_seq()
             self.step = 0
             self.tick()
@@ -353,7 +380,7 @@ class ControlUnit:
 
     def __repr__(self):
         state_repr = "STATE: {}\tTICK: {:3} PC: {:3}/{} ADDR: {:3} MEM_OUT: {:3} T0: {:3} T1: {:3} T2: {:3} T3: {:3} SP: {:3}".format(
-            self.state,
+            self.states[self.state],
             self._tick,
             self.program_counter,
             self.step,
