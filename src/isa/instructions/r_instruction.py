@@ -15,7 +15,7 @@ class RInstruction(Instruction):
 
     ```plaintext
     ┌───────────────────────────────┬─────────┬─────────┬────────┬────────┐
-    │           31...22             │ 21...17 │ 16...12 │ 11...7 │  6..0  │
+    │           31...14             │ 13...11 │  10...8 │  7...5 │  4..0  │
     ├───────────────────────────────┼─────────┼─────────┼────────┼────────┤
     │                               │   rs2   │   rs1   │   rd   │ opcode │
     └───────────────────────────────┴─────────┴─────────┴────────┴────────┘
@@ -23,13 +23,13 @@ class RInstruction(Instruction):
     """
 
     rd = None
-    "код регистра назначения, 5 бит"
+    "код регистра назначения, 3 бита"
 
     rs1 = None
-    "код регистра первого операнда, 5 бит"
+    "код регистра первого операнда, 3 бита"
 
     rs2 = None
-    "код регистра второго операнда, 5 бит"
+    "код регистра второго операнда, 3 бита"
 
     def __init__(self, opcode: Opcode, rd: Register, rs1: Register, rs2: Register):
         super().__init__(opcode)
@@ -40,25 +40,25 @@ class RInstruction(Instruction):
     @override
     def to_binary(self) -> int:
         return (
-            register_to_binary[self.rs2] << 17
-            | register_to_binary[self.rs1] << 12
-            | register_to_binary[self.rd] << 7
+            register_to_binary[self.rs2] << 11
+            | register_to_binary[self.rs1] << 8
+            | register_to_binary[self.rd] << 5
             | opcode_to_binary[self.opcode]
         )
 
     @staticmethod
     @override
     def from_binary(binary: int) -> "RInstruction":
-        opcode_bin = extract_bits(binary, 7)
+        opcode_bin = extract_bits(binary, 5)
         opcode = binary_to_opcode[opcode_bin]
 
-        rd_bin = extract_bits(binary >> 7, 5)
+        rd_bin = extract_bits(binary >> 5, 3)
         rd = binary_to_register[rd_bin]
 
-        rs1_bin = extract_bits(binary >> 12, 5)
+        rs1_bin = extract_bits(binary >> 8, 3)
         rs1 = binary_to_register[rs1_bin]
 
-        rs2_bin = extract_bits(binary >> 17, 5)
+        rs2_bin = extract_bits(binary >> 11, 3)
         rs2 = binary_to_register[rs2_bin]
 
         return RInstruction(opcode, rd, rs1, rs2)

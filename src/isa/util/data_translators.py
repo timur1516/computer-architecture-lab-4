@@ -70,7 +70,7 @@ def to_hex_instructions(binary_instructions: bytes) -> str:
         address = word_list[i]
         word = word_list[i + 1]
 
-        opcode_bin = extract_bits(word, 7)
+        opcode_bin = extract_bits(word, 5)
         opcode = binary_to_opcode[opcode_bin]
 
         instruction_type = opcode_to_instruction_type[opcode]
@@ -110,7 +110,7 @@ def from_bytes_instructions(binary_instructions: bytes) -> list[Instruction]:
         address = word_list[i]
         word = word_list[i + 1]
 
-        opcode_bin = extract_bits(word, 7)
+        opcode_bin = extract_bits(word, 5)
         opcode = binary_to_opcode[opcode_bin]
 
         instruction_type = opcode_to_instruction_type[opcode]

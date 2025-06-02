@@ -15,7 +15,7 @@ class IInstruction(Instruction):
 
     ```plaintext
     ┌─────────────────────────────────────────┬─────────┬────────┬────────┐
-    │                 31...17                 │ 16...12 │ 11...7 │  6..0  │
+    │                 31...11                 │  10...8 │  7...5 │  4..0  │
     ├─────────────────────────────────────────┼─────────┼────────┼────────┤
     │                   imm                   │   rs1   │   rd   │ opcode │
     └─────────────────────────────────────────┴─────────┴────────┴────────┘
@@ -23,16 +23,16 @@ class IInstruction(Instruction):
     """
 
     rd = None
-    "код регистра назначения, 5 бит"
+    "код регистра назначения, 3 бита"
 
     rs1 = None
-    "код регистра источника, 5 бит"
+    "код регистра источника, 3 бита"
 
     imm = None
-    "непосредственное значение, 15 бит"
+    "непосредственное значение, 21 бит"
 
     def __init__(self, opcode: Opcode, rd: Register, rs1: Register, imm: int):
-        assert is_correct_bin_size_signed(imm, 15), "imm size in IInstruction must be 15 bits"
+        assert is_correct_bin_size_signed(imm, 21), "imm size in IInstruction must be 21 bits"
 
         super().__init__(opcode)
         self.rd = rd
@@ -42,25 +42,25 @@ class IInstruction(Instruction):
     @override
     def to_binary(self) -> int:
         return (
-            self.imm << 17
-            | register_to_binary[self.rs1] << 12
-            | register_to_binary[self.rd] << 7
+            self.imm << 11
+            | register_to_binary[self.rs1] << 8
+            | register_to_binary[self.rd] << 5
             | opcode_to_binary[self.opcode]
         )
 
     @staticmethod
     @override
     def from_binary(binary: int) -> "IInstruction":
-        opcode_bin = extract_bits(binary, 7)
+        opcode_bin = extract_bits(binary, 5)
         opcode = binary_to_opcode[opcode_bin]
 
-        rd_bin = extract_bits(binary >> 7, 5)
+        rd_bin = extract_bits(binary >> 5, 3)
         rd = binary_to_register[rd_bin]
 
-        rs1_bin = extract_bits(binary >> 12, 5)
+        rs1_bin = extract_bits(binary >> 8, 3)
         rs1 = binary_to_register[rs1_bin]
 
-        imm = binary_to_signed_int(binary >> 17, 15)
+        imm = binary_to_signed_int(binary >> 11, 21)
 
         return IInstruction(opcode, rd, rs1, imm)
 

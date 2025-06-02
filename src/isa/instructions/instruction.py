@@ -13,7 +13,7 @@ class Instruction:
 
     ```plaintext
     ┌────────────────────────────────────────────────────────────┬────────┐
-    │                           31...7                           │  6..0  │
+    │                           31...5                           │  4..0  │
     ├────────────────────────────────────────────────────────────┼────────┤
     │                             imm                            │ opcode │
     └────────────────────────────────────────────────────────────┴────────┘
@@ -21,7 +21,7 @@ class Instruction:
     """
 
     opcode = None
-    "Код операции, 7 бит"
+    "Код операции, 5 бит"
 
     address = None
     "Адрес инструкции. B случае если не указывать сразу, инициализируется нулём"
@@ -32,18 +32,21 @@ class Instruction:
 
     def to_binary(self) -> int:
         """Преобразование инструкции в бинарное представление"""
+
         return opcode_to_binary[self.opcode]
 
     @staticmethod
     def from_binary(binary: int) -> "Instruction":
         """Получение объекта инструкции из бинарного представления"""
-        opcode_bin = extract_bits(binary, 7)
+
+        opcode_bin = extract_bits(binary, 5)
         opcode = binary_to_opcode[opcode_bin]
 
         return Instruction(opcode)
 
     def to_json(self) -> dict:
         """Преобразование инструкции в json словарь"""
+
         return {"address": self.address, "opcode": str(self.opcode)}
 
     def __str__(self) -> str:

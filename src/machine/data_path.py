@@ -162,7 +162,7 @@ class DataPath:
     def signal_perform_alu_operation_reg_u_imm(self, rs1: Register, imm: int, opcode: Opcode):
         """Выполнение операции АЛУ с операндами из регистра и расширенного непосредственного значения"""
 
-        return self._perform_alu_operation(self.registers_file[rs1], imm << 12, opcode)
+        return self._perform_alu_operation(self.registers_file[rs1], imm << 8, opcode)
 
     def signal_perform_alu_operation_pc_imm(self, pc: int, imm: int, opcode: Opcode):
         """Выполнение операции АЛУ со значением счётчика команд и непосредственного значения"""

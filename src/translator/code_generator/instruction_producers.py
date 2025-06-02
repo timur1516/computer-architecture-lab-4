@@ -32,13 +32,13 @@ def push_register_instructions_producer(rs: Register) -> list[Instruction]:
 
 
 def push_number_instructions_producer(value) -> list[Instruction]:
-    if is_correct_bin_size_signed(value, 15):
+    if is_correct_bin_size_signed(value, 21):
         return [
             IInstruction(Opcode.ADDI, Register.T0, Register.ZERO, value),
             *push_register_instructions_producer(Register.T0),
         ]
-    lower_value = binary_to_signed_int(value, 12)
-    upper_value = binary_to_signed_int(((value - lower_value) >> 12), 20)
+    lower_value = binary_to_signed_int(value, 8)
+    upper_value = binary_to_signed_int(((value - lower_value) >> 8), 24)
     return [
         UInstruction(Opcode.LUI, Register.T0, upper_value),
         IInstruction(Opcode.ADDI, Register.T0, Register.T0, lower_value),
@@ -88,16 +88,16 @@ def label_stub_instructions_producer(stub: LabelStub) -> list[Instruction]:
 def branch_stub_instructions_producer(stub: BranchStub) -> list[Instruction]:
     label_address = stub.label.address
     offset = label_address - stub.address
-    if is_correct_bin_size_signed(offset, 15):
+    if is_correct_bin_size_signed(offset, 21):
         return [BInstruction(stub.opcode, stub.rs1, stub.rs2, offset)]
-    if is_correct_bin_size_signed(offset - 2, 25):
+    if is_correct_bin_size_signed(offset - 2, 27):
         return [
             BInstruction(stub.opcode, stub.rs1, stub.rs2, 2),
             JInstruction(Opcode.J, 2),
             JInstruction(Opcode.J, offset - 2),
         ]
-    lower_value = binary_to_signed_int(label_address, 12)
-    upper_value = binary_to_signed_int(((label_address - lower_value) >> 12), 20)
+    lower_value = binary_to_signed_int(label_address, 8)
+    upper_value = binary_to_signed_int(((label_address - lower_value) >> 8), 24)
     return [
         BInstruction(stub.opcode, stub.rs1, stub.rs2, 2),
         JInstruction(Opcode.J, 4),
@@ -110,10 +110,10 @@ def branch_stub_instructions_producer(stub: BranchStub) -> list[Instruction]:
 def jump_stub_instructions_producer(stub: JumpStub) -> list[Instruction]:
     label_address = stub.label.address
     offset = label_address - stub.address
-    if is_correct_bin_size_signed(offset, 25):
+    if is_correct_bin_size_signed(offset, 27):
         return [JInstruction(Opcode.J, offset)]
-    lower_value = binary_to_signed_int(label_address, 12)
-    upper_value = binary_to_signed_int(((label_address - lower_value) >> 12), 20)
+    lower_value = binary_to_signed_int(label_address, 8)
+    upper_value = binary_to_signed_int(((label_address - lower_value) >> 8), 24)
     return [
         UInstruction(Opcode.LUI, Register.T0, upper_value),
         IInstruction(Opcode.ADDI, Register.T0, Register.T0, lower_value),

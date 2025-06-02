@@ -15,7 +15,7 @@ class JRInstruction(Instruction):
 
     ```plaintext
     ┌─────────────────────────────────────────┬─────────┬────────┬────────┐
-    │                 31...17                 │ 16...12 │ 11...7 │  6..0  │
+    │                 31...11                 │  10...8 │  7...5 │  4..0  │
     ├─────────────────────────────────────────┼─────────┼────────┼────────┤
     │                   imm                   │   rs1   │   imm  │ opcode │
     └─────────────────────────────────────────┴─────────┴────────┴────────┘
@@ -23,13 +23,13 @@ class JRInstruction(Instruction):
     """
 
     rs1 = None
-    "код регистра относительно которого происходит смещение, 5 бит"
+    "код регистра относительно которого происходит смещение, 3 бита"
 
     imm = None
-    "величина смещения, 20 бит"
+    "величина смещения, 24 бита"
 
     def __init__(self, opcode: Opcode, imm: int, rs1: Register):
-        assert is_correct_bin_size_signed(imm, 20), "imm size in JRInstruction must be 20 bits"
+        assert is_correct_bin_size_signed(imm, 24), "imm size in JRInstruction must be 24 bits"
 
         super().__init__(opcode)
         self.rs1 = rs1
@@ -37,22 +37,22 @@ class JRInstruction(Instruction):
 
     @override
     def to_binary(self) -> int:
-        imm_lower = extract_bits(self.imm, 5)
-        imm_upper = self.imm >> 5
-        return imm_upper << 17 | register_to_binary[self.rs1] << 12 | imm_lower << 7 | opcode_to_binary[self.opcode]
+        imm_lower = extract_bits(self.imm, 3)
+        imm_upper = self.imm >> 3
+        return imm_upper << 11 | register_to_binary[self.rs1] << 8 | imm_lower << 5 | opcode_to_binary[self.opcode]
 
     @staticmethod
     @override
     def from_binary(binary: int) -> "JRInstruction":
-        opcode_bin = extract_bits(binary, 7)
+        opcode_bin = extract_bits(binary, 5)
         opcode = binary_to_opcode[opcode_bin]
 
-        imm_lower = extract_bits(binary >> 7, 5)
-        imm_upper = extract_bits(binary >> 17, 15)
-        imm_bin = (imm_upper << 5) | imm_lower
-        imm = binary_to_signed_int(imm_bin, 20)
+        imm_lower = extract_bits(binary >> 5, 3)
+        imm_upper = extract_bits(binary >> 11, 21)
+        imm_bin = (imm_upper << 3) | imm_lower
+        imm = binary_to_signed_int(imm_bin, 24)
 
-        rs1_bin = extract_bits(binary >> 12, 5)
+        rs1_bin = extract_bits(binary >> 8, 3)
         rs1 = binary_to_register[rs1_bin]
 
         return JRInstruction(opcode, imm, rs1)

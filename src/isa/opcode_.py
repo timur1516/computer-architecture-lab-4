@@ -6,9 +6,7 @@ class Opcode(Enum):
 
     LUI = "lui"
 
-    SW = "sw"
     LW = "lw"
-
     ADDI = "addi"
 
     ADD = "add"
@@ -24,6 +22,7 @@ class Opcode(Enum):
     OR = "or"
     XOR = "xor"
 
+    SW = "sw"
     BEQ = "beq"
     BNE = "bne"
     BGT = "bgt"
@@ -41,8 +40,8 @@ class Opcode(Enum):
         return self.value
 
 
-opcode_to_binary = {op: i + 1 for i, op in enumerate(Opcode)}
+opcode_to_binary = {op: i for i, op in enumerate(Opcode)}
 "Вспомогательный словарь, для преобразования opcode в бинарное представление"
 
-binary_to_opcode = {i + 1: op for i, op in enumerate(Opcode)}
+binary_to_opcode = {i: op for i, op in enumerate(Opcode)}
 "Вспомогательный словарь, для преобразования бинарного представления opcode в объект"

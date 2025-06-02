@@ -9,7 +9,6 @@ from src.isa.opcode_ import Opcode
 
 opcode_to_instruction_type = {
     Opcode.LUI: UInstruction,
-    Opcode.SW: BInstruction,
     Opcode.LW: IInstruction,
     Opcode.ADDI: IInstruction,
     Opcode.ADD: RInstruction,
@@ -23,6 +22,7 @@ opcode_to_instruction_type = {
     Opcode.SRL: RInstruction,
     Opcode.AND: RInstruction,
     Opcode.XOR: RInstruction,
+    Opcode.SW: BInstruction,
     Opcode.BEQ: BInstruction,
     Opcode.BNE: BInstruction,
     Opcode.BGT: BInstruction,

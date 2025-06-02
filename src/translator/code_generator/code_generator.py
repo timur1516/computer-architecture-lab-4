@@ -203,6 +203,7 @@ class CodeGenerator(AstNodeVisitor):
 
     def visit_literal(self, node: AstLiteral) -> list[Instruction]:
         """Загружает значение из массива литералов, и записывает его в `data` в виде паскаль-строки"""
+
         value = self.literals[node.value_id]
         self.data.append(Data(len(value)))
         for c in value:

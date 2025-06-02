@@ -15,7 +15,7 @@ class UInstruction(Instruction):
 
     ```plaintext
     ┌───────────────────────────────────────────────────┬────────┬────────┐
-    │                       31...12                     │ 11...7 │  6..0  │
+    │                       31...8                      │  7...5 │  4..0  │
     ├───────────────────────────────────────────────────┼────────┼────────┤
     │                         imm                       │   rd   │ opcode │
     └───────────────────────────────────────────────────┴────────┴────────┘
@@ -23,13 +23,13 @@ class UInstruction(Instruction):
     """
 
     rd = None
-    "код регистра назначения, 5 бит"
+    "код регистра назначения, 3 бита"
 
     u_imm = None
-    "расширенное непосредственное значение, 20 бит"
+    "расширенное непосредственное значение, 24 бита"
 
     def __init__(self, opcode: Opcode, rd: Register, u_imm: int):
-        assert is_correct_bin_size_signed(u_imm, 20), "u_imm size in UInstruction must be 20 bits"
+        assert is_correct_bin_size_signed(u_imm, 24), "u_imm size in UInstruction must be 24 bits"
 
         super().__init__(opcode)
         self.rd = rd
@@ -37,18 +37,18 @@ class UInstruction(Instruction):
 
     @override
     def to_binary(self) -> int:
-        return self.u_imm << 12 | register_to_binary[self.rd] << 7 | opcode_to_binary[self.opcode]
+        return self.u_imm << 8 | register_to_binary[self.rd] << 5 | opcode_to_binary[self.opcode]
 
     @staticmethod
     @override
     def from_binary(binary: int) -> "UInstruction":
-        opcode_bin = extract_bits(binary, 7)
+        opcode_bin = extract_bits(binary, 5)
         opcode = binary_to_opcode[opcode_bin]
 
-        rd_bin = extract_bits(binary >> 7, 5)
+        rd_bin = extract_bits(binary >> 5, 3)
         rd = binary_to_register[rd_bin]
 
-        u_imm = binary_to_signed_int(binary >> 12, 20)
+        u_imm = binary_to_signed_int(binary >> 8, 24)
 
         return UInstruction(opcode, rd, u_imm)
 
