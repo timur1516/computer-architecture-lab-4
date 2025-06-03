@@ -13,7 +13,8 @@ in_source: |-
 
 in_stdin: |-
   20 a
-  150 b
+  25 b
+  150 c
 
 out_instructions: !!binary |
   AAAAAAAAECIAAAAB///9ogAAAAIAAA0PAAAAAwAAACIAAAAE///9ogAAAAUAAA0PAAAABgAABSEA
@@ -32,9 +33,9 @@ out_stdout: |
   source LoC: 11 code instr: 77
   ============================================================
   output_buffer_str:
-  ab
+  bc
   output_buffer_num:
-  [97, 98]
+  [98, 99]
 
 out_log: |-
   DEBUG   machine:simulation    STATE: NORMAL	TICK:   0 PC:   0/0 ADDR:   0 MEM_OUT:   0 T0:   0 T1:   0 T2:   0 T3:   0 SP: 1000 	addi t0, zero, 2
@@ -64,31 +65,33 @@ out_log: |-
   DEBUG   machine:simulation    STATE: INT_ENTER	TICK:  23 PC:  15/1 ADDR: 999 MEM_OUT:   2 T0:   2 T1:   2 T2:   0 T3:   0 SP: 999 	lw t0, sp, 0
   DEBUG   machine:simulation    STATE: INT_BODY	TICK:  24 PC: 900/0 ADDR: 999 MEM_OUT:   2 T0:   2 T1:   2 T2:   0 T3:   0 SP: 999 	addi t0, zero, 3
   DEBUG   machine:simulation    STATE: INT_BODY	TICK:  25 PC: 901/0 ADDR: 999 MEM_OUT:   2 T0:   3 T1:   2 T2:   0 T3:   0 SP: 999 	addi sp, sp, -1
+  DEBUG   control_unit:process_next_tick Interrupt request on tick 25 with value "b" | 98
+  DEBUG   control_unit:process_next_tick Interrupts inside of interrupts are not supported
   DEBUG   machine:simulation    STATE: INT_BODY	TICK:  26 PC: 902/0 ADDR: 999 MEM_OUT:   2 T0:   3 T1:   2 T2:   0 T3:   0 SP: 998 	sw sp, t0, 0
   DEBUG   machine:simulation    STATE: INT_BODY	TICK:  27 PC: 902/1 ADDR: 998 MEM_OUT:   0 T0:   3 T1:   2 T2:   0 T3:   0 SP: 998 	sw sp, t0, 0
   DEBUG   machine:simulation    STATE: INT_BODY	TICK:  28 PC: 903/0 ADDR: 998 MEM_OUT:   3 T0:   3 T1:   2 T2:   0 T3:   0 SP: 998 	addi t1, zero, 0
   DEBUG   machine:simulation    STATE: INT_BODY	TICK:  29 PC: 904/0 ADDR: 998 MEM_OUT:   3 T0:   3 T1:   0 T2:   0 T3:   0 SP: 998 	lw t0, t1, 0
   DEBUG   machine:simulation    STATE: INT_BODY	TICK:  30 PC: 904/1 ADDR:   0 MEM_OUT:   0 T0:   3 T1:   0 T2:   0 T3:   0 SP: 998 	lw t0, t1, 0
-  DEBUG   data_path:signal_data_memory_load input: "a" | 97
-  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  31 PC: 905/0 ADDR:   0 MEM_OUT:   0 T0:  97 T1:   0 T2:   0 T3:   0 SP: 998 	addi sp, sp, -1
-  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  32 PC: 906/0 ADDR:   0 MEM_OUT:   0 T0:  97 T1:   0 T2:   0 T3:   0 SP: 997 	sw sp, t0, 0
-  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  33 PC: 906/1 ADDR: 997 MEM_OUT:   0 T0:  97 T1:   0 T2:   0 T3:   0 SP: 997 	sw sp, t0, 0
-  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  34 PC: 907/0 ADDR: 997 MEM_OUT:  97 T0:  97 T1:   0 T2:   0 T3:   0 SP: 997 	lw t0, sp, 0
-  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  35 PC: 907/1 ADDR: 997 MEM_OUT:  97 T0:  97 T1:   0 T2:   0 T3:   0 SP: 997 	lw t0, sp, 0
-  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  36 PC: 908/0 ADDR: 997 MEM_OUT:  97 T0:  97 T1:   0 T2:   0 T3:   0 SP: 997 	addi sp, sp, 1
-  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  37 PC: 909/0 ADDR: 997 MEM_OUT:  97 T0:  97 T1:   0 T2:   0 T3:   0 SP: 998 	lw t1, sp, 0
-  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  38 PC: 909/1 ADDR: 998 MEM_OUT:   3 T0:  97 T1:   0 T2:   0 T3:   0 SP: 998 	lw t1, sp, 0
-  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  39 PC: 910/0 ADDR: 998 MEM_OUT:   3 T0:  97 T1:   3 T2:   0 T3:   0 SP: 998 	addi sp, sp, 1
-  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  40 PC: 911/0 ADDR: 998 MEM_OUT:   3 T0:  97 T1:   3 T2:   0 T3:   0 SP: 999 	sw t1, t0, 0
-  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  41 PC: 911/1 ADDR:   3 MEM_OUT:   0 T0:  97 T1:   3 T2:   0 T3:   0 SP: 999 	sw t1, t0, 0
-  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  42 PC: 912/0 ADDR:   3 MEM_OUT:  97 T0:  97 T1:   3 T2:   0 T3:   0 SP: 999 	addi t0, zero, 2
-  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  43 PC: 913/0 ADDR:   3 MEM_OUT:  97 T0:   2 T1:   3 T2:   0 T3:   0 SP: 999 	addi sp, sp, -1
-  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  44 PC: 914/0 ADDR:   3 MEM_OUT:  97 T0:   2 T1:   3 T2:   0 T3:   0 SP: 998 	sw sp, t0, 0
+  DEBUG   data_path:signal_data_memory_load input: "b" | 98
+  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  31 PC: 905/0 ADDR:   0 MEM_OUT:   0 T0:  98 T1:   0 T2:   0 T3:   0 SP: 998 	addi sp, sp, -1
+  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  32 PC: 906/0 ADDR:   0 MEM_OUT:   0 T0:  98 T1:   0 T2:   0 T3:   0 SP: 997 	sw sp, t0, 0
+  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  33 PC: 906/1 ADDR: 997 MEM_OUT:   0 T0:  98 T1:   0 T2:   0 T3:   0 SP: 997 	sw sp, t0, 0
+  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  34 PC: 907/0 ADDR: 997 MEM_OUT:  98 T0:  98 T1:   0 T2:   0 T3:   0 SP: 997 	lw t0, sp, 0
+  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  35 PC: 907/1 ADDR: 997 MEM_OUT:  98 T0:  98 T1:   0 T2:   0 T3:   0 SP: 997 	lw t0, sp, 0
+  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  36 PC: 908/0 ADDR: 997 MEM_OUT:  98 T0:  98 T1:   0 T2:   0 T3:   0 SP: 997 	addi sp, sp, 1
+  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  37 PC: 909/0 ADDR: 997 MEM_OUT:  98 T0:  98 T1:   0 T2:   0 T3:   0 SP: 998 	lw t1, sp, 0
+  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  38 PC: 909/1 ADDR: 998 MEM_OUT:   3 T0:  98 T1:   0 T2:   0 T3:   0 SP: 998 	lw t1, sp, 0
+  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  39 PC: 910/0 ADDR: 998 MEM_OUT:   3 T0:  98 T1:   3 T2:   0 T3:   0 SP: 998 	addi sp, sp, 1
+  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  40 PC: 911/0 ADDR: 998 MEM_OUT:   3 T0:  98 T1:   3 T2:   0 T3:   0 SP: 999 	sw t1, t0, 0
+  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  41 PC: 911/1 ADDR:   3 MEM_OUT:   0 T0:  98 T1:   3 T2:   0 T3:   0 SP: 999 	sw t1, t0, 0
+  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  42 PC: 912/0 ADDR:   3 MEM_OUT:  98 T0:  98 T1:   3 T2:   0 T3:   0 SP: 999 	addi t0, zero, 2
+  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  43 PC: 913/0 ADDR:   3 MEM_OUT:  98 T0:   2 T1:   3 T2:   0 T3:   0 SP: 999 	addi sp, sp, -1
+  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  44 PC: 914/0 ADDR:   3 MEM_OUT:  98 T0:   2 T1:   3 T2:   0 T3:   0 SP: 998 	sw sp, t0, 0
   DEBUG   machine:simulation    STATE: INT_BODY	TICK:  45 PC: 914/1 ADDR: 998 MEM_OUT:   3 T0:   2 T1:   3 T2:   0 T3:   0 SP: 998 	sw sp, t0, 0
   DEBUG   machine:simulation    STATE: INT_BODY	TICK:  46 PC: 915/0 ADDR: 998 MEM_OUT:   2 T0:   2 T1:   3 T2:   0 T3:   0 SP: 998 	addi t0, zero, 1
   DEBUG   machine:simulation    STATE: INT_BODY	TICK:  47 PC: 916/0 ADDR: 998 MEM_OUT:   2 T0:   1 T1:   3 T2:   0 T3:   0 SP: 998 	addi sp, sp, -1
   DEBUG   machine:simulation    STATE: INT_BODY	TICK:  48 PC: 917/0 ADDR: 998 MEM_OUT:   2 T0:   1 T1:   3 T2:   0 T3:   0 SP: 997 	sw sp, t0, 0
-  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  49 PC: 917/1 ADDR: 997 MEM_OUT:  97 T0:   1 T1:   3 T2:   0 T3:   0 SP: 997 	sw sp, t0, 0
+  DEBUG   machine:simulation    STATE: INT_BODY	TICK:  49 PC: 917/1 ADDR: 997 MEM_OUT:  98 T0:   1 T1:   3 T2:   0 T3:   0 SP: 997 	sw sp, t0, 0
   DEBUG   machine:simulation    STATE: INT_BODY	TICK:  50 PC: 918/0 ADDR: 997 MEM_OUT:   1 T0:   1 T1:   3 T2:   0 T3:   0 SP: 997 	lw t0, sp, 0
   DEBUG   machine:simulation    STATE: INT_BODY	TICK:  51 PC: 918/1 ADDR: 997 MEM_OUT:   1 T0:   1 T1:   3 T2:   0 T3:   0 SP: 997 	lw t0, sp, 0
   DEBUG   machine:simulation    STATE: INT_BODY	TICK:  52 PC: 919/0 ADDR: 997 MEM_OUT:   1 T0:   1 T1:   3 T2:   0 T3:   0 SP: 997 	addi sp, sp, 1
@@ -106,8 +109,7 @@ out_log: |-
   DEBUG   machine:simulation    STATE: NORMAL	TICK:  64 PC:  17/1 ADDR:   2 MEM_OUT:   1 T0:   2 T1:   2 T2:   0 T3:   0 SP: 1000 	lw t0, t0, 0
   DEBUG   machine:simulation    STATE: NORMAL	TICK:  65 PC:  18/0 ADDR:   2 MEM_OUT:   1 T0:   1 T1:   2 T2:   0 T3:   0 SP: 1000 	addi sp, sp, -1
   DEBUG   machine:simulation    STATE: NORMAL	TICK:  66 PC:  19/0 ADDR:   2 MEM_OUT:   1 T0:   1 T1:   2 T2:   0 T3:   0 SP: 999 	sw sp, t0, 0
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  67 PC:  19/1 ADDR: 999 MEM_OUT:   2 T0:   1 T1:   2 T2:   0 T3:   0 SP: 999 	sw sp, t0, 0
-  DEBUG   machine:simulation    STATE: NORMAL	TICK:  68 PC:  20/0 ADDR: 999 MEM_OUT:   1 T0:   1 T1:   2 T2:   0 T3:   0 SP: 999 	lw t0, sEOF
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  67 PC:  19/1 ADDR: 999 MEM_OUT:   2 T0:   1 T1:  EOF
 
 out_instructions_hex: |2-
     0 - 00001022 - 00000000000000000001000000100010 - addi t0, zero, 2

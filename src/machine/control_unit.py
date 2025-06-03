@@ -182,6 +182,7 @@ class ControlUnit:
 
         if self._tick in self.input_timetable:
             value = self.input_timetable[self._tick]
+            self.data_path.input_buffer.append(value)
             logging.debug('Interrupt request on tick %s with value "%s" | %s', self._tick, int_to_char(value), value)
             if not self.is_interrupts_enabled:
                 logging.debug("Interrupts are disabled")
@@ -189,7 +190,6 @@ class ControlUnit:
                 logging.debug("Interrupts inside of interrupts are not supported")
             else:
                 self.is_interrupt_request = True
-                self.data_path.input_buffer.append(value)
 
         if self.is_interrupt_request and self.step == 0 and self.states[self.state] == ProcessorState.NORMAL:
             self.signal_shift_state()

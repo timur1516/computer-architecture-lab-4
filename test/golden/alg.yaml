@@ -115,7 +115,49 @@ out_log: |-
   DEBUG   machine:simulation    STATE: NORMAL	TICK:  25 PC:  17/1 ADDR: 998 MEM_OUT:   0 T0:   0 T1:   2 T2:   0 T3:   0 SP: 998 	lw t0, sp, 0
   DEBUG   machine:simulation    STATE: NORMAL	TICK:  26 PC:  18/0 ADDR: 998 MEM_OUT:   0 T0:   0 T1:   2 T2:   0 T3:   0 SP: 998 	addi sp, sp, 1
   DEBUG   machine:simulation    STATE: NORMAL	TICK:  27 PC:  19/0 ADDR: 998 MEM_OUT:   0 T0:   0 T1:   2 T2:   0 T3:   0 SP: 999 	lw t1, sp, 0
-  DEBUG   machEOF
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  28 PC:  19/1 ADDR: 999 MEM_OUT:   3 T0:   0 T1:   2 T2:   0 T3:   0 SP: 999 	lw t1, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  29 PC:  20/0 ADDR: 999 MEM_OUT:   3 T0:   0 T1:   3 T2:   0 T3:   0 SP: 999 	addi sp, sp, 1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  30 PC:  21/0 ADDR: 999 MEM_OUT:   3 T0:   0 T1:   3 T2:   0 T3:   0 SP: 1000 	sw t1, t0, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  31 PC:  21/1 ADDR:   3 MEM_OUT:   0 T0:   0 T1:   3 T2:   0 T3:   0 SP: 1000 	sw t1, t0, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  32 PC:  22/0 ADDR:   3 MEM_OUT:   0 T0:   0 T1:   3 T2:   0 T3:   0 SP: 1000 	addi t0, zero, 100
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  33 PC:  23/0 ADDR:   3 MEM_OUT:   0 T0: 100 T1:   3 T2:   0 T3:   0 SP: 1000 	addi sp, sp, -1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  34 PC:  24/0 ADDR:   3 MEM_OUT:   0 T0: 100 T1:   3 T2:   0 T3:   0 SP: 999 	sw sp, t0, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  35 PC:  24/1 ADDR: 999 MEM_OUT:   3 T0: 100 T1:   3 T2:   0 T3:   0 SP: 999 	sw sp, t0, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  36 PC:  25/0 ADDR: 999 MEM_OUT: 100 T0: 100 T1:   3 T2:   0 T3:   0 SP: 999 	addi t0, zero, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  37 PC:  26/0 ADDR: 999 MEM_OUT: 100 T0:   0 T1:   3 T2:   0 T3:   0 SP: 999 	addi sp, sp, -1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  38 PC:  27/0 ADDR: 999 MEM_OUT: 100 T0:   0 T1:   3 T2:   0 T3:   0 SP: 998 	sw sp, t0, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  39 PC:  27/1 ADDR: 998 MEM_OUT:   0 T0:   0 T1:   3 T2:   0 T3:   0 SP: 998 	sw sp, t0, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  40 PC:  28/0 ADDR: 998 MEM_OUT:   0 T0:   0 T1:   3 T2:   0 T3:   0 SP: 998 	lw t0, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  41 PC:  28/1 ADDR: 998 MEM_OUT:   0 T0:   0 T1:   3 T2:   0 T3:   0 SP: 998 	lw t0, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  42 PC:  29/0 ADDR: 998 MEM_OUT:   0 T0:   0 T1:   3 T2:   0 T3:   0 SP: 998 	addi sp, sp, 1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  43 PC:  30/0 ADDR: 998 MEM_OUT:   0 T0:   0 T1:   3 T2:   0 T3:   0 SP: 999 	lw t1, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  44 PC:  30/1 ADDR: 999 MEM_OUT: 100 T0:   0 T1:   3 T2:   0 T3:   0 SP: 999 	lw t1, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  45 PC:  31/0 ADDR: 999 MEM_OUT: 100 T0:   0 T1: 100 T2:   0 T3:   0 SP: 999 	addi sp, sp, 1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  46 PC:  32/0 ADDR: 999 MEM_OUT: 100 T0:   0 T1: 100 T2:   0 T3:   0 SP: 1000 	addi sp, sp, -1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  47 PC:  33/0 ADDR: 999 MEM_OUT: 100 T0:   0 T1: 100 T2:   0 T3:   0 SP: 999 	sw sp, t0, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  48 PC:  33/1 ADDR: 999 MEM_OUT: 100 T0:   0 T1: 100 T2:   0 T3:   0 SP: 999 	sw sp, t0, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  49 PC:  34/0 ADDR: 999 MEM_OUT:   0 T0:   0 T1: 100 T2:   0 T3:   0 SP: 999 	addi sp, sp, -1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  50 PC:  35/0 ADDR: 999 MEM_OUT:   0 T0:   0 T1: 100 T2:   0 T3:   0 SP: 998 	sw sp, t1, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  51 PC:  35/1 ADDR: 998 MEM_OUT:   0 T0:   0 T1: 100 T2:   0 T3:   0 SP: 998 	sw sp, t1, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  52 PC:  36/0 ADDR: 998 MEM_OUT: 100 T0:   0 T1: 100 T2:   0 T3:   0 SP: 998 	lw t0, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  53 PC:  36/1 ADDR: 998 MEM_OUT: 100 T0:   0 T1: 100 T2:   0 T3:   0 SP: 998 	lw t0, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  54 PC:  37/0 ADDR: 998 MEM_OUT: 100 T0: 100 T1: 100 T2:   0 T3:   0 SP: 998 	addi sp, sp, -1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  55 PC:  38/0 ADDR: 998 MEM_OUT: 100 T0: 100 T1: 100 T2:   0 T3:   0 SP: 997 	sw sp, t0, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  56 PC:  38/1 ADDR: 997 MEM_OUT:   0 T0: 100 T1: 100 T2:   0 T3:   0 SP: 997 	sw sp, t0, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  57 PC:  39/0 ADDR: 997 MEM_OUT: 100 T0: 100 T1: 100 T2:   0 T3:   0 SP: 997 	addi t0, zero, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  58 PC:  40/0 ADDR: 997 MEM_OUT: 100 T0:   0 T1: 100 T2:   0 T3:   0 SP: 997 	addi sp, sp, -1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  59 PC:  41/0 ADDR: 997 MEM_OUT: 100 T0:   0 T1: 100 T2:   0 T3:   0 SP: 996 	sw sp, t0, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  60 PC:  41/1 ADDR: 996 MEM_OUT:   0 T0:   0 T1: 100 T2:   0 T3:   0 SP: 996 	sw sp, t0, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  61 PC:  42/0 ADDR: 996 MEM_OUT:   0 T0:   0 T1: 100 T2:   0 T3:   0 SP: 996 	lw t0, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  62 PC:  42/1 ADDR: 996 MEM_OUT:   0 T0:   0 T1: 100 T2:   0 T3:   0 SP: 996 	lw t0, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  63 PC:  43/0 ADDR: 996 MEM_OUT:   0 T0:   0 T1: 100 T2:   0 T3:   0 SP: 996 	addi sp, sp, 1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  64 PC:  44/0 ADDR: 996 MEM_OUT:   0 T0:   0 T1: 100 T2:   0 T3:   0 SP: 997 	lw t1, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  65 PC:  44/1 ADDR: 997 MEM_OUT: 100 T0:   0 T1: 100 T2:   0 T3:   0 SP: 997 	lw t1, sp, 0
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  66 PC:  45/0 ADDR: 997 MEM_OUT: 100 T0:   0 T1: 100 T2:   0 T3:   0 SP: 997 	addi sp, sp, 1
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  67 PC:  46/0 ADDR: 997 MEM_OUT: 100 T0:   0 T1: 100 T2:   0 T3:   0 SP: 998 	bne t0, t1, 3
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  68 PC:  46/1 ADDR: 997 MEM_OUT: 100 T0:   0 T1: 100 T2:   0 T3:   0 SP: 998 	bne t0, t1, 3
+  DEBUG   machine:simulation    STATE: NORMAL	TICK:  69 PC:  49/0 ADDR: 997 MEM_OUT: 100 T0:   0 T1: 100 T2:   0 T3:   0 SP: 998 	addi t3, zero, 1
+  DEBUG   machine:simulation    STATE: EOF
 
 out_instructions_hex: |2-
     0 - 00001022 - 00000000000000000001000000100010 - addi t0, zero, 2

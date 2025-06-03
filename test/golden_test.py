@@ -9,7 +9,7 @@ import pytest
 import src.machine.machine as machine
 import src.translator.translator as translator
 
-MAX_LOG = 4000
+MAX_LOG = 10000
 
 
 @pytest.mark.golden_test("golden/*.yaml")
