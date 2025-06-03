@@ -75,14 +75,14 @@ class CodeGenerator(AstNodeVisitor):
         self.interrupts: list[Instruction] = []
 
     @staticmethod
-    def link_instructions(instructions: list[Instruction], start_address: int):
-        """Проставляет адреса инструкций"""
+    def link(items: list[Instruction | Data], start_address: int):
+        """Проставляет адреса инструкций или данных"""
 
-        instruction_address = start_address
-        for instr in instructions:
-            instr.address = instruction_address
-            if not isinstance(instr, LabelStub):
-                instruction_address += 1
+        address = start_address
+        for item in items:
+            item.address = address
+            if not isinstance(item, LabelStub):
+                address += 1
 
     @staticmethod
     def shift_instructions(shift: int, instructions: list[Instruction]):
@@ -90,6 +90,16 @@ class CodeGenerator(AstNodeVisitor):
 
         for instr in instructions:
             instr.address += shift
+
+    @staticmethod
+    def get_stub_replace(stub) -> list[Instruction]:
+        if isinstance(stub, LabelStub):
+            return label_stub_instructions_producer(stub)
+        if isinstance(stub, BranchStub):
+            return branch_stub_instructions_producer(stub)
+        if isinstance(stub, JumpStub):
+            return jump_stub_instructions_producer(stub)
+        raise NotImplementedError()
 
     def resolve_branches(self, instructions: list[Instruction]) -> list[Instruction]:
         """Разрешает переходы, удаляя заглушки меток и заменяя заглушки переходов на реальные инструкции
@@ -115,31 +125,12 @@ class CodeGenerator(AstNodeVisitor):
         for i, instr in enumerate(instructions):
             if isinstance(instr, Stub):
                 replace = self.get_stub_replace(instr)
-                self.link_instructions(replace, instr.address)
+                self.link(replace, instr.address)
                 result += replace
             else:
                 result.append(instr)
 
         return result
-
-    @staticmethod
-    def get_stub_replace(stub) -> list[Instruction]:
-        if isinstance(stub, LabelStub):
-            return label_stub_instructions_producer(stub)
-        if isinstance(stub, BranchStub):
-            return branch_stub_instructions_producer(stub)
-        if isinstance(stub, JumpStub):
-            return jump_stub_instructions_producer(stub)
-        raise NotImplementedError()
-
-    @staticmethod
-    def link_data(data: list[Data], start_address: int):
-        """Проставляет адреса данных"""
-
-        data_start_address = start_address
-        for i in range(len(data)):
-            data[i].address = data_start_address
-            data_start_address += 1
 
     def translate(self) -> (list[Instruction], list[Data]):
         """Основная функция трансляции
@@ -159,16 +150,16 @@ class CodeGenerator(AstNodeVisitor):
         self.instructions = self.visit(self.tree)
         self.instructions.append(Instruction(Opcode.HALT))
 
-        self.link_instructions(self.instructions, 0)
+        self.link(self.instructions, 0)
         self.instructions = self.resolve_branches(self.instructions)
         assert (
             max([instr.address for instr in self.instructions]) < INTERRUPTS_HANDLER_ADDRESS
         ), "Main instructions overlap interrupts block"
 
-        self.link_instructions(self.interrupts, INTERRUPTS_HANDLER_ADDRESS)
+        self.link(self.interrupts, INTERRUPTS_HANDLER_ADDRESS)
         self.interrupts = self.resolve_branches(self.interrupts)
 
-        self.link_data(self.data, DATA_AREA_START_ADDR)
+        self.link(self.data, DATA_AREA_START_ADDR)
 
         program = self.instructions + self.interrupts
         assert max([instr.address for instr in program]) < INSTRUCTION_MEMORY_SIZE, "Too many instructions"
