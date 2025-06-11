@@ -182,6 +182,7 @@ class ControlUnit:
 
         if self._tick in self.input_timetable:
             value = self.input_timetable[self._tick]
+            self.data_path.input_buffer.clear()
             self.data_path.input_buffer.append(value)
             logging.debug('Interrupt request on tick %s with value "%s" | %s', self._tick, int_to_char(value), value)
             if not self.is_interrupts_enabled:
